@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -35,6 +33,10 @@ public class Inventory {
 
     @Column(name = "price")
     private Float price;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unit", nullable = false)
+    private UnitType unit;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "inputType", nullable = false)

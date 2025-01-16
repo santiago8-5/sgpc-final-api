@@ -2,12 +2,16 @@ package com.grupoingenios.sgpc.sgpc_api_final.service.work;
 
 import com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduleRequestDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduleResponseDTO;
+import com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduledActivityRequestDTO;
+import com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduledActivityResponseDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.work.ClientWorkRequestDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.work.ClientWorkResponseDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.work.WorkRequestDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.work.WorkResponseDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.Supplier;
+import com.grupoingenios.sgpc.sgpc_api_final.entity.schedule.Activity;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.schedule.Schedule;
+import com.grupoingenios.sgpc.sgpc_api_final.entity.schedule.ScheduledActivity;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.work.Client;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.work.ClientWork;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.work.Work;
@@ -16,10 +20,13 @@ import com.grupoingenios.sgpc.sgpc_api_final.exception.BadRequestException;
 import com.grupoingenios.sgpc.sgpc_api_final.exception.EntityInUseException;
 import com.grupoingenios.sgpc.sgpc_api_final.exception.ResourceNotFoundException;
 import com.grupoingenios.sgpc.sgpc_api_final.mapper.schedule.ScheduleMapper;
+import com.grupoingenios.sgpc.sgpc_api_final.mapper.schedule.ScheduledActivityMapper;
 import com.grupoingenios.sgpc.sgpc_api_final.mapper.work.ClientWorkMapper;
 import com.grupoingenios.sgpc.sgpc_api_final.mapper.work.WorkMapper;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.inventory.SupplierRepository;
+import com.grupoingenios.sgpc.sgpc_api_final.repository.schedule.ActivityRepository;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.schedule.ScheduleRepository;
+import com.grupoingenios.sgpc.sgpc_api_final.repository.schedule.ScheduledActivityRepository;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.work.ClientRepository;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.work.ClientWorkRepository;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.work.WorkRepository;
@@ -46,11 +53,15 @@ public class WorkService {
     private final ClientRepository clientRepository;
     private final ClientWorkRepository clientWorkRepository;
     private final ClientWorkMapper clientWorkMapper;
+    private final ScheduledActivityRepository scheduledActivityRepository;
+    private final ScheduledActivityMapper scheduledActivityMapper;
+    private final ActivityRepository activityRepository;
 
 
     public WorkService(WorkRepository workRepository, WorkMapper workMapper, WorkTypeRepository workTypeRepository,
                        ScheduleRepository scheduleRepository, ScheduleMapper scheduleMapper, SupplierRepository supplierRepository,
-                       ClientRepository clientRepository, ClientWorkRepository clientWorkRepository, ClientWorkMapper clientWorkMapper) {
+                       ClientRepository clientRepository, ClientWorkRepository clientWorkRepository, ClientWorkMapper clientWorkMapper, ScheduledActivityRepository scheduledActivityRepository,
+                       ScheduledActivityMapper scheduledActivityMapper, ActivityRepository activityRepository) {
         this.workRepository = workRepository;
         this.workMapper = workMapper;
         this.workTypeRepository = workTypeRepository;
@@ -60,6 +71,14 @@ public class WorkService {
         this.clientRepository = clientRepository;
         this.clientWorkRepository = clientWorkRepository;
         this.clientWorkMapper= clientWorkMapper;
+        this.scheduledActivityRepository = scheduledActivityRepository;
+        this.scheduledActivityMapper = scheduledActivityMapper;
+        this.activityRepository = activityRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClientWorkResponseDTO> getClientWorksByWorkId(Long workId) {
+        return workRepository.findAllClientWorkDTOsByWorkId(workId);
     }
 
     @Transactional(readOnly = true)
@@ -72,12 +91,18 @@ public class WorkService {
     }
 
     @Transactional(readOnly = true)
-    public WorkResponseDTO getWorkById(Long id){
+    public WorkResponseDTO getWorkById(Long id) {
         Work work = workRepository
                 .findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException(WORK_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
 
-        return workMapper.toResponseDto(work);
+        WorkResponseDTO responseDTO = workMapper.toResponseDto(work);
+
+        // Verificar si la obra tiene un cronograma asociado
+        boolean hasSchedule = workRepository.existsByIdWorkAndScheduleIsNotNull(work.getIdWork());
+        responseDTO.setHasSchedule(hasSchedule);
+
+        return responseDTO;
     }
 
 
@@ -109,37 +134,54 @@ public class WorkService {
     }
 
     @Transactional
-    public WorkResponseDTO updateWork(Long id, WorkRequestDTO workRequestDTO){
+    public WorkResponseDTO updateWork(Long id, WorkRequestDTO workRequestDTO) {
 
         // Obtener la obra existente
         Work existingWork = workRepository
                 .findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException(WORK_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
 
-        // Validamos que el nombre sea unico
+        // Validar que el nombre sea único
         validateUniqueName(existingWork.getName(), workRequestDTO.getName());
 
-        // Obtenemos el tipo de obra
+        // Obtener el tipo de obra
         WorkType workType = getWorkTypeId(workRequestDTO.getWorkTypeId());
 
-        // Obtenemos los nuevos Supplier del request
+        // Obtener los nuevos proveedores del request
         Set<Supplier> newSuppliers = getSuppliersById(workRequestDTO.getSuppliersId());
 
+        // Obtener los proveedores actuales de la tabla intermedia
+        Set<Supplier> currentSuppliers = new HashSet<>(existingWork.getSuppliers());
 
-        // Actualizamos la obra con los datos del mapper
+        // Determinar los proveedores a eliminar y a agregar
+        Set<Supplier> suppliersToRemove = currentSuppliers.stream()
+                .filter(supplier -> !newSuppliers.contains(supplier))
+                .collect(Collectors.toSet());
+
+        Set<Supplier> suppliersToAdd = newSuppliers.stream()
+                .filter(supplier -> !currentSuppliers.contains(supplier))
+                .collect(Collectors.toSet());
+
+        // Actualizar la tabla intermedia manualmente
+        suppliersToRemove.forEach(supplier -> {
+            existingWork.getSuppliers().remove(supplier);
+            supplier.getWorks().remove(existingWork);
+        });
+
+        suppliersToAdd.forEach(supplier -> {
+            existingWork.getSuppliers().add(supplier);
+            supplier.getWorks().add(existingWork);
+        });
+
+        // Actualizar otros datos de la obra
         workMapper.updateWorkFromDTO(workRequestDTO, existingWork);
         existingWork.setWorkType(workType);
         existingWork.setWorkCode(generatedCode(existingWork));
 
+        // Guardar cambios
+        workRepository.save(existingWork);
 
-        existingWork.setSuppliers(newSuppliers);
-
-        // Guardamos la obra modificada
-        Work updatedWork = workRepository.save(existingWork);
-
-        // devolvemos el response
-        return workMapper.toResponseDto(updatedWork);
-
+        return workMapper.toResponseDto(existingWork);
     }
 
     // CREAR y ASIGNAR SCHEDULE
@@ -241,7 +283,7 @@ public class WorkService {
 
     // Asignar un supplier a una obra
     @Transactional
-    public void assignSupplierToWork(Long workId,  Long supplierId){
+    public void assignSupplierToWork(Long workId, Long supplierId) {
 
         // Verificar y obtener la existencia de la obra
         Work work = getWorForClientById(workId);
@@ -254,10 +296,14 @@ public class WorkService {
             throw new EntityInUseException("El proveedor ya está asignado a esta obra.");
         }
 
-        // Agregar el proveedor a la obra
-        work.getSuppliers().add(supplier);
+        // Cargar completamente la colección antes de modificarla
+        Set<Supplier> suppliers = work.getSuppliers();
+        suppliers.add(supplier);
 
-        // Guardar la obra (la relación se guardará automáticamente)
+        // Sincronizar la colección
+        work.setSuppliers(suppliers);
+
+        // Guardar los cambios
         workRepository.save(work);
     }
 
@@ -316,5 +362,97 @@ public class WorkService {
                         .orElseThrow(() -> new ResourceNotFoundException(SUPPLIER_NOT_FOUND)))
                 .collect(Collectors.toSet());
     }
+
+
+    @Transactional(readOnly = true)
+    public ScheduleResponseDTO getScheduleByWorkId(Long workId) {
+        Work work = workRepository.findById(workId)
+                .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
+
+        if (work.getSchedule() == null) {
+            throw new ResourceNotFoundException("No hay un cronograma relacionado a esta obra");
+        }
+
+        return scheduleMapper.toResponseDto(work.getSchedule());
+    }
+
+    // RETORNAR LAS ACTIVIDADES DE UN CRONOGRAMA, EN EL CONTEXTO DE UNA OBRA
+    @Transactional(readOnly = true)
+    public List<ScheduledActivityResponseDTO> getScheduledActivitiesByWorkId(Long idWork) {
+        // Obtener la obra y verificar su existencia
+        Work work = workRepository.findById(idWork)
+                .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
+
+        // Verificar si tiene un cronograma asociado
+        if (work.getSchedule() == null) {
+            throw new ResourceNotFoundException("No hay un cronograma relacionado a esta obra");
+        }
+
+        // Obtener las actividades programadas relacionadas con el cronograma
+        List<ScheduledActivity> activities = scheduledActivityRepository.findAllBySchedule_IdSchedule(work.getSchedule().getIdSchedule());
+
+        // Mapear las actividades a DTOs
+        return activities.stream()
+                .map(scheduledActivityMapper::toResponseDto)
+                .toList();
+    }
+
+
+    // Crear una atividad programada
+    @Transactional
+    public ScheduledActivityResponseDTO createScheduledActivityFromWork(Long idWork, ScheduledActivityRequestDTO scheduledActivityRequestDTO) {
+        // Validar y obtener la obra
+        Work work = workRepository.findById(idWork)
+                .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
+
+        // Validar que la obra tenga un cronograma asociado
+        Schedule schedule = work.getSchedule();
+        if (schedule == null) {
+            throw new BadRequestException("No hay un cronograma asociado a esta obra. Crea un cronograma primero.");
+        }
+
+        // Validar fechas
+        validateDates(scheduledActivityRequestDTO);
+
+        // Obtener la actividad del request
+        Activity activity = getActivityById(scheduledActivityRequestDTO.getIdActivity());
+
+        // Verificar si ya existe la relación entre el cronograma y la actividad
+        validateUniqueScheduledActivity(schedule.getIdSchedule(), activity.getIdActivity());
+
+        // Crear y asignar la actividad programada al cronograma
+        ScheduledActivity scheduledActivity = scheduledActivityMapper.toEntity(scheduledActivityRequestDTO);
+        scheduledActivity.setSchedule(schedule);
+        scheduledActivity.setActivity(activity);
+
+        // Guardar la actividad programada
+        ScheduledActivity savedScheduledActivity = scheduledActivityRepository.save(scheduledActivity);
+
+        // Mapear a DTO y devolver la respuesta
+        return scheduledActivityMapper.toResponseDto(savedScheduledActivity);
+    }
+
+    private void validateDates(ScheduledActivityRequestDTO dto) {
+        if (dto.getEstimatedStartDate().isAfter(dto.getEstimatedEndDate())) {
+            throw new BadRequestException("La fecha estimada de inicio no puede ser posterior a la fecha estimada de fin.");
+        }
+        if (dto.getActualStartDate() != null && dto.getActualEndDate() != null && dto.getActualStartDate().isAfter(dto.getActualEndDate())) {
+            throw new BadRequestException("La fecha real de inicio no puede ser posterior a la fecha real de fin.");
+        }
+    }
+
+    private Activity getActivityById(Long id){
+        return activityRepository
+                .findById(id)
+                .orElseThrow(()->new ResourceNotFoundException(ACTIVITY_NOT_FOUND));
+    }
+
+    private void validateUniqueScheduledActivity(Long scheduleId, Long activityId) {
+        if (scheduledActivityRepository.existsBySchedule_IdScheduleAndActivity_IdActivity(scheduleId, activityId)) {
+            throw new BadRequestException("La actividad ya está asociada al cronograma especificado.");
+        }
+    }
+
+
 
 }

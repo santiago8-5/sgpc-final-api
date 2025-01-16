@@ -3,6 +3,7 @@ package com.grupoingenios.sgpc.sgpc_api_final.config;
 
 import com.grupoingenios.sgpc.sgpc_api_final.entity.user.Rol;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.user.User;
+import com.grupoingenios.sgpc.sgpc_api_final.exception.BadRequestException;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.user.RolRepository;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.user.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -49,10 +50,8 @@ public class AdminInitializerService {
             // Guardando el nuevo user
             userRepository.save(adminUser);
 
-            System.out.println("El usuario administrador se creo con éxito");
-
         }else{
-            System.out.println("EL usuario administrador ya existe");
+            throw new BadRequestException("El usuario ADMIN ya existe");
         }
 
 

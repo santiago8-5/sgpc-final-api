@@ -48,5 +48,7 @@ public class WorkResponseDTO {
 
     private  LocalDateTime lastModifiedDate;
 
+    private boolean hasSchedule;
+
 
 }

@@ -66,7 +66,6 @@ public class Employee {
     private Set<Account> accounts = new HashSet<>();
 
 
-    // Agrega la propiedad employeeType como Transient
     @Transient
     private String employeeType;
 
@@ -81,7 +80,6 @@ public class Employee {
         return "DESCONOCIDO";
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -94,7 +92,6 @@ public class Employee {
     public int hashCode() {
         return idEmployee != null ? idEmployee.hashCode() : 0;
     }
-
 
 
 }

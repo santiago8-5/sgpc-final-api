@@ -20,10 +20,6 @@ public class ScheduleResponseDTO {
 
     private StatusSchedule status;
 
-    /*
-    private List<Activity> activities;
-     */
-
     private LocalDateTime created_at;
 
     private LocalDateTime lastModifiedDate;

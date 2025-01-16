@@ -18,6 +18,7 @@ public class Client {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name = "id_client")
     private Long idClient;
 
     @Column(name="name", nullable=false, length=100)

@@ -22,6 +22,7 @@ import java.util.Set;
 public class Work {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_work")
     private Long idWork;
 
     @Column(name = "name", nullable = false, length = 200)

@@ -1,7 +1,10 @@
 package com.grupoingenios.sgpc.sgpc_api_final.dto.inventory;
 
 import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.InputType;
+import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.UnitType;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.WineryName;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -21,6 +24,9 @@ public class InventoryRequestDTO {
     private String description;
 
     private Float price;
+
+    @NotNull(message = "El tipo de unidad es obligatoria")
+    private UnitType unit;
 
     @NotNull(message = "El tipo de insumo es obligatorio")
     private InputType inputType;

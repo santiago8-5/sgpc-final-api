@@ -2,6 +2,8 @@ package com.grupoingenios.sgpc.sgpc_api_final.controller.work;
 
 import com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduleRequestDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduleResponseDTO;
+import com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduledActivityRequestDTO;
+import com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduledActivityResponseDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.work.ClientWorkRequestDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.work.ClientWorkResponseDTO;
 import com.grupoingenios.sgpc.sgpc_api_final.dto.work.WorkRequestDTO;
@@ -12,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -38,6 +39,12 @@ public class WorkController {
         return ResponseEntity.ok(work);
     }
 
+    @GetMapping("/{idWork}/client-works")
+    public ResponseEntity<List<ClientWorkResponseDTO>> getClientWorksByWorkId(@PathVariable Long idWork) {
+        List<ClientWorkResponseDTO> clientWorks = workService.getClientWorksByWorkId(idWork);
+        return ResponseEntity.ok(clientWorks);
+    }
+
 
     @PostMapping
     public ResponseEntity<WorkResponseDTO> createWork(@Valid @RequestBody WorkRequestDTO workRequestDTO){
@@ -52,10 +59,39 @@ public class WorkController {
     }
 
 
+    // Crear un schedule en el contexto de una obra
     @PostMapping("/{idWork}/schedule")
     public ResponseEntity<ScheduleResponseDTO> createAndAssignSchedule(@PathVariable Long idWork, @Valid @RequestBody ScheduleRequestDTO scheduleRequestDTO){
         ScheduleResponseDTO schedule = workService.createAndAssignSchedule(idWork, scheduleRequestDTO);
         return new ResponseEntity<>(schedule, HttpStatus.CREATED);
+    }
+
+
+    // Obtener el schedule relacionado a una obra
+    @GetMapping("/{idWork}/schedule")
+    public ResponseEntity<ScheduleResponseDTO> getScheduleByWork(@PathVariable Long idWork) {
+        ScheduleResponseDTO schedule = workService.getScheduleByWorkId(idWork);
+        return ResponseEntity.ok(schedule);
+    }
+
+    // Obtener actividades programadas a un schedule
+    @GetMapping("/{idWork}/schedule/activities")
+    public ResponseEntity<List<ScheduledActivityResponseDTO>> getActivitiesBySchedule(@PathVariable Long idWork) {
+        // Delegar toda la lógica al servicio
+        List<ScheduledActivityResponseDTO> activities = workService.getScheduledActivitiesByWorkId(idWork);
+
+        return ResponseEntity.ok(activities);
+    }
+
+    // Crear actividad programada desde el contexto de una obra
+    @PostMapping("/{idWork}/schedule/activities")
+    public ResponseEntity<ScheduledActivityResponseDTO> createScheduledActivityFromWork(
+            @PathVariable Long idWork,
+            @Valid @RequestBody ScheduledActivityRequestDTO scheduledActivityRequestDTO) {
+
+        ScheduledActivityResponseDTO scheduledActivity = workService.createScheduledActivityFromWork(idWork, scheduledActivityRequestDTO);
+
+        return new ResponseEntity<>(scheduledActivity, HttpStatus.CREATED);
     }
 
 

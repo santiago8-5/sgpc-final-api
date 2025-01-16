@@ -1,6 +1,7 @@
 package com.grupoingenios.sgpc.sgpc_api_final.dto.inventory;
 
 import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.InputType;
+import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.UnitType;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.WineryName;
 import lombok.Data;
 
@@ -19,6 +20,8 @@ public class InventoryResponseDTO {
     private String description;
 
     private Float price;
+
+    private UnitType unit;
 
     private InputType inputType;
 
