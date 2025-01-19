@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/scheduled-activities")
@@ -48,6 +50,20 @@ public class ScheduledActivityController {
     public ResponseEntity<Void> deleteActivityAssignment(@PathVariable Long scheduledActivityId, @PathVariable Long activityAssignmentId){
         scheduledActivityService.deleteActivityAssignment(scheduledActivityId, activityAssignmentId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/{scheduledActivityId}/has-responsible")
+    public ResponseEntity<Map<String, Boolean>> hasResponsible(@PathVariable Long scheduledActivityId) {
+        boolean hasResponsible = scheduledActivityService.checkIfActivityHasResponsible(scheduledActivityId);
+        return ResponseEntity.ok(Collections.singletonMap("hasResponsible", hasResponsible));
+    }
+
+    @GetMapping("/{scheduledActivityId}/assignments")
+    public ResponseEntity<List<ActivityAssignmentResponseDTO>> getAssignmentsByScheduledActivity(
+            @PathVariable Long scheduledActivityId) {
+        List<ActivityAssignmentResponseDTO> assignments = scheduledActivityService
+                .getAssignmentsByScheduledActivityId(scheduledActivityId);
+        return ResponseEntity.ok(assignments);
     }
 
 }

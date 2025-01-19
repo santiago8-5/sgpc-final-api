@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
@@ -49,6 +48,11 @@ public class EmployeeService {
                 .stream()
                 .map(employeeMapper::toResponseDTO)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmployeeResponseDTO>  getAllIdAndName() {
+        return employeeRepository.findAllIdAndName();
     }
 
 

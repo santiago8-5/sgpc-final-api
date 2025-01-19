@@ -3,6 +3,7 @@ package com.grupoingenios.sgpc.sgpc_api_final.repository.schedule;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.schedule.ActivityAssignment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ActivityAssignmentRepository extends JpaRepository<ActivityAssignment, Long> {
@@ -18,6 +19,9 @@ public interface ActivityAssignmentRepository extends JpaRepository<ActivityAssi
 
     //validación y la búsqueda de la asignación
     Optional<ActivityAssignment> findByScheduledActivity_ScheduledActivityIdAndActivityAssignmentId(Long scheduledActivityId, Long activityAssignmentId);
+
+    // Recuperar asignaciones de una actividad programada
+    List<ActivityAssignment> findByScheduledActivity_ScheduledActivityId(Long scheduledActivityId);
 
 
 }

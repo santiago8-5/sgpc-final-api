@@ -1,7 +1,6 @@
 package com.grupoingenios.sgpc.sgpc_api_final.dto.schedule;
 
 import com.grupoingenios.sgpc.sgpc_api_final.entity.schedule.StatusScheduledActivity;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +11,6 @@ import java.time.LocalDate;
 @Getter
 public class ScheduledActivityRequestDTO {
     @NotNull(message = "La fecha de inicio estimada es obligatoria")
-    @FutureOrPresent(message = "La fecha estimada de inicio debe ser actual o futura.")
     private LocalDate estimatedStartDate;
 
     @NotNull(message = "La fecha fin estimada es obligatoria")

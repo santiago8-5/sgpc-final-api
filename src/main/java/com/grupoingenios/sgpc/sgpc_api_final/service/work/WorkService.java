@@ -315,10 +315,6 @@ public class WorkService {
 
 
 
-
-
-
-
     private WorkType getWorkTypeId(Long id){
         return workTypeRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException(WORK_TYPE_NOT_FOUND));
@@ -431,6 +427,80 @@ public class WorkService {
         // Mapear a DTO y devolver la respuesta
         return scheduledActivityMapper.toResponseDto(savedScheduledActivity);
     }
+
+    // Actualizar actividad programada
+    @Transactional
+    public ScheduledActivityResponseDTO updateScheduledActivityFromWork(Long idWork, Long idScheduledActivity, ScheduledActivityRequestDTO scheduledActivityRequestDTO) {
+        // Validar y obtener la obra
+        Work work = workRepository.findById(idWork)
+                .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
+
+        // Verificar si tiene un cronograma asociado
+        Schedule schedule = work.getSchedule();
+        if (schedule == null) {
+            throw new BadRequestException("No hay un cronograma asociado a esta obra.");
+        }
+
+        // Validar que la actividad programada existe y pertenece al cronograma
+        ScheduledActivity existingScheduledActivity = scheduledActivityRepository.findById(idScheduledActivity)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró este registro"));
+
+        if (!existingScheduledActivity.getSchedule().getIdSchedule().equals(schedule.getIdSchedule())) {
+            throw new BadRequestException("La actividad no pertenece al cronograma de esta obra.");
+        }
+
+        // Validar la nueva actividad y fechas
+        Activity activity = getActivityById(scheduledActivityRequestDTO.getIdActivity());
+        validateDates(scheduledActivityRequestDTO);
+
+        // Actualizar los datos de la actividad programada
+        scheduledActivityMapper.updateScheduledActivityFromDTO(scheduledActivityRequestDTO, existingScheduledActivity);
+        existingScheduledActivity.setActivity(activity);
+
+        // Guardar la actividad actualizada
+        ScheduledActivity updatedScheduledActivity = scheduledActivityRepository.save(existingScheduledActivity);
+
+        // Mapear a DTO y devolver la respuesta
+        return scheduledActivityMapper.toResponseDto(updatedScheduledActivity);
+    }
+
+    // Borrar actividad programada
+    @Transactional
+    public void deleteScheduledActivityFromWork(Long idWork, Long idScheduledActivity) {
+        // Validar y obtener la obra
+        Work work = workRepository.findById(idWork)
+                .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
+
+        // Verificar si tiene un cronograma asociado
+        Schedule schedule = work.getSchedule();
+        if (schedule == null) {
+            throw new BadRequestException("No hay un cronograma asociado a esta obra.");
+        }
+
+        // Verificar si la actividad programada pertenece al cronograma de la obra
+        ScheduledActivity scheduledActivity = scheduledActivityRepository.findById(idScheduledActivity)
+                .orElseThrow(() -> new ResourceNotFoundException("Detalles de actividad programada no encontrados."));
+
+        if (!scheduledActivity.getSchedule().getIdSchedule().equals(schedule.getIdSchedule())) {
+            throw new BadRequestException("La actividad no pertenece al cronograma de esta obra.");
+        }
+
+        // Eliminar la actividad programada
+        scheduledActivityRepository.delete(scheduledActivity);
+    }
+
+    // Obtener actividad programada
+    @Transactional(readOnly = true)
+    public ScheduledActivityResponseDTO getScheduledActivityFromWork(Long idWork, Long idScheduledActivity) {
+        // Recuperar directamente la actividad programada
+        ScheduledActivity scheduledActivity = scheduledActivityRepository.findById(idScheduledActivity)
+                .orElseThrow(() -> new ResourceNotFoundException("Detalles de actividad programada no encontrados."));
+
+        // Mapear a DTO y retornar
+        return scheduledActivityMapper.toResponseDto(scheduledActivity);
+    }
+
+
 
     private void validateDates(ScheduledActivityRequestDTO dto) {
         if (dto.getEstimatedStartDate().isAfter(dto.getEstimatedEndDate())) {

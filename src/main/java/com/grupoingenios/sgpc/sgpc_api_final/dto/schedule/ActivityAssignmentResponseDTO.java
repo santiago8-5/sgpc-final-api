@@ -21,6 +21,8 @@ public class ActivityAssignmentResponseDTO {
 
     private String nameEmployee;
 
+    private Long idEmployee;
+
     private LocalDateTime createdDate;
 
     private LocalDateTime lastModifiedDate;

@@ -16,6 +16,8 @@ import com.grupoingenios.sgpc.sgpc_api_final.repository.schedule.ScheduledActivi
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.EMPLOYEE_NOT_FOUND;
 
 @Service
@@ -46,6 +48,21 @@ public class ScheduledActivityService {
                 .toList();
     }
 
+    // Método para verificar si existe un responsable
+    public boolean checkIfActivityHasResponsible(Long scheduledActivityId) {
+        return activityAssignmentRepository.existsByScheduledActivity_ScheduledActivityIdAndResponsibleTrue(scheduledActivityId);
+    }
+
+    // Obtener todas las asignaciones de una actividad programada
+    @Transactional(readOnly = true)
+    public List<ActivityAssignmentResponseDTO> getAssignmentsByScheduledActivityId(Long scheduledActivityId) {
+        return activityAssignmentRepository
+                .findByScheduledActivity_ScheduledActivityId(scheduledActivityId)
+                .stream()
+                .map(activityAssignmentMapper::toResponseDto)
+                .toList();
+    }
+
     // retornar detalles de scheduled activity
     @Transactional(readOnly = true)
     public List<ScheduledActivityResponseDTO> getScheduledActivitiesBySchedule(Long scheduleId){
@@ -59,7 +76,7 @@ public class ScheduledActivityService {
     public ActivityAssignmentResponseDTO createActivityAssignment(Long scheduledActivityId, ActivityAssignmentRequestDTO activityAssignmentRequestDTO){
 
         // Validar duplicidad de asignación
-        validateUniqueAssignment(activityAssignmentRequestDTO.getScheduledActivityId(), activityAssignmentRequestDTO.getEmployeeId());
+        validateUniqueAssignment(scheduledActivityId, activityAssignmentRequestDTO.getEmployeeId());
 
         // Recuperar ScheduledActivity PÓR ID
         ScheduledActivity scheduledActivity = getScheduledActivityById(scheduledActivityId);
@@ -87,31 +104,40 @@ public class ScheduledActivityService {
 
     // editar una asignacion a un empleado
     @Transactional
-    public ActivityAssignmentResponseDTO updateActivityAssignment(Long scheduledActivityId, Long activityAssignmentId, ActivityAssignmentRequestDTO activityAssignmentRequestDTO){
+    public ActivityAssignmentResponseDTO updateActivityAssignment(Long scheduledActivityId, Long activityAssignmentId, ActivityAssignmentRequestDTO activityAssignmentRequestDTO) {
 
+        // Recuperar asignación existente
         ActivityAssignment existingActivityAssignment = activityAssignmentRepository
-                .findById(activityAssignmentId).orElseThrow((()-> new ResourceNotFoundException("Registro no encontrado")));
-
+                .findById(activityAssignmentId).orElseThrow(() -> new ResourceNotFoundException("Registro no encontrado"));
 
         // Validar que la asignación pertenece a la actividad programada
         if (!activityAssignmentRepository.existsByScheduledActivity_ScheduledActivityIdAndActivityAssignmentId(scheduledActivityId, activityAssignmentId)) {
             throw new ResourceNotFoundException("La asignación no pertenece a la actividad programada especificada o no existe.");
         }
 
+        // Validar duplicidad de asignación si el EmployeeId ha cambiado
+        if (!existingActivityAssignment.getEmployee().getIdEmployee().equals(activityAssignmentRequestDTO.getEmployeeId())) {
+            validateUniqueAssignment(scheduledActivityId, activityAssignmentRequestDTO.getEmployeeId());
+        }
 
         // Validar si el responsable actual deja de ser responsable
         if (existingActivityAssignment.isResponsible() && !activityAssignmentRequestDTO.isResponsible()) {
             validateAtLeastOneResponsible(existingActivityAssignment.getScheduledActivity().getScheduledActivityId());
         }
 
-        // Actualizar los campos
+        // Si el EmployeeId ha cambiado, recuperar el nuevo empleado
+        if (!existingActivityAssignment.getEmployee().getIdEmployee().equals(activityAssignmentRequestDTO.getEmployeeId())) {
+            Employee newEmployee = getEmployeeById(activityAssignmentRequestDTO.getEmployeeId());
+            existingActivityAssignment.setEmployee(newEmployee);
+        }
+
+        // Actualizar los demás campos desde el DTO
         activityAssignmentMapper.updateActivityAssignmentFromDTO(activityAssignmentRequestDTO, existingActivityAssignment);
 
         // Guardar registro
         ActivityAssignment updatedActivityAssignment = activityAssignmentRepository.save(existingActivityAssignment);
 
         return activityAssignmentMapper.toResponseDto(updatedActivityAssignment);
-
     }
 
     //Eliminar una asignación a un empleado

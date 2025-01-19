@@ -94,6 +94,38 @@ public class WorkController {
         return new ResponseEntity<>(scheduledActivity, HttpStatus.CREATED);
     }
 
+    // Actualizar actividad programada desde el cointexto de una obra
+    @PutMapping("/{idWork}/schedule/activities/{idScheduledActivity}")
+    public ResponseEntity<ScheduledActivityResponseDTO> updateScheduledActivityFromWork(
+            @PathVariable Long idWork,
+            @PathVariable Long idScheduledActivity,
+            @Valid @RequestBody ScheduledActivityRequestDTO scheduledActivityRequestDTO) {
+
+        ScheduledActivityResponseDTO updatedScheduledActivity = workService.updateScheduledActivityFromWork(
+                idWork, idScheduledActivity, scheduledActivityRequestDTO);
+
+        return ResponseEntity.ok(updatedScheduledActivity);
+    }
+
+    // Eliminar actividad programada desde el contexto de una obra
+    @DeleteMapping("/{idWork}/schedule/activities/{idScheduledActivity}")
+    public ResponseEntity<Void> deleteScheduledActivityFromWork(
+            @PathVariable Long idWork,
+            @PathVariable Long idScheduledActivity) {
+        workService.deleteScheduledActivityFromWork(idWork, idScheduledActivity);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    // obtener actividadfa programada desde el contexto de una obra
+    @GetMapping("/{idWork}/schedule/activities/{idScheduledActivity}")
+    public ResponseEntity<ScheduledActivityResponseDTO> getScheduledActivityFromWork(
+            @PathVariable Long idWork,
+            @PathVariable Long idScheduledActivity) {
+
+        ScheduledActivityResponseDTO scheduledActivity = workService.getScheduledActivityFromWork(idWork, idScheduledActivity);
+        return ResponseEntity.ok(scheduledActivity);
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWork(@PathVariable Long id){

@@ -54,6 +54,12 @@ public class EmployeeController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @GetMapping("/employees/id-and-name")
+    public ResponseEntity<List<EmployeeResponseDTO>> getAllIdAndName() {
+        List<EmployeeResponseDTO> employeeIdAndName= employeeService.getAllIdAndName();
+        return ResponseEntity.ok(employeeIdAndName);
+    }
+
 
 
 }

@@ -16,6 +16,6 @@ public class ActivityAssignmentRequestDTO {
 
     private Long employeeId;
 
-    private Long scheduledActivityId;
+   // private Long scheduledActivityId;
 
 }
