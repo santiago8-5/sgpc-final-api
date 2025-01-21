@@ -13,6 +13,7 @@ public interface ScheduledActivityMapper {
     ScheduledActivity toEntity(ScheduledActivityRequestDTO scheduledActivityRequestDTO);
 
     @Mapping(target = "nameActivity", source = "activity.name")
+    @Mapping(target = "activityId", source = "activity.idActivity")
     ScheduledActivityResponseDTO toResponseDto(ScheduledActivity scheduledActivity);
 
     @Mapping(target = "activity", ignore = true)

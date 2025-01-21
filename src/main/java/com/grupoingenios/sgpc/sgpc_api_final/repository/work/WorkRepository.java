@@ -18,6 +18,7 @@ public interface WorkRepository extends JpaRepository<Work, Long> {
     SELECT NEW com.grupoingenios.sgpc.sgpc_api_final.dto.work.ClientWorkResponseDTO(
         cw.id,
         c.name,
+        c.idClient,
         w.name,
         cw.role,
         cw.assignedAt,

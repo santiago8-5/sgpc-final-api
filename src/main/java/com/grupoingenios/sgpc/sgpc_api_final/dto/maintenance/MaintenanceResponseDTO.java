@@ -18,6 +18,8 @@ public class MaintenanceResponseDTO {
 
     private String nameEmployee;
 
+    private Long employeeId;
+
     private String maintenanceType;
 
     private String description;

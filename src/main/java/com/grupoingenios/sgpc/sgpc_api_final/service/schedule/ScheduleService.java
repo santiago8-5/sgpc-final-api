@@ -93,6 +93,7 @@ public class ScheduleService {
     public ScheduledActivityResponseDTO createAndAssignScheduledActivity(Long idSchedule, ScheduledActivityRequestDTO scheduledActivityRequestDTO){
         // Validar fechas
         validateDates(scheduledActivityRequestDTO);
+        System.out.println("hola");
 
         // Obtenemos el schedule que viene en el request
         Schedule schedule = getScheduleForActivityById(idSchedule);
@@ -101,7 +102,7 @@ public class ScheduleService {
         Activity activity = getActivityById(scheduledActivityRequestDTO.getIdActivity());
 
         // Verificamos si ya existe una relación entre un schedule y una activity
-        validateUniqueScheduledActivity(schedule.getIdSchedule(), activity.getIdActivity());
+        validateUniqueScheduledActivity(schedule.getIdSchedule(), activity.getIdActivity(), null);
 
         ScheduledActivity scheduledActivity = scheduledActivityMapper.toEntity(scheduledActivityRequestDTO);
         scheduledActivity.setSchedule(schedule);
@@ -133,6 +134,13 @@ public class ScheduleService {
     @Transactional
     public ScheduledActivityResponseDTO updateScheduleActivity(Long idSchedule, Long idScheduledActivity, ScheduledActivityRequestDTO scheduledActivityRequestDTO){
 
+
+        // Validar fechas
+        validateDates(scheduledActivityRequestDTO);
+
+        // Obtenemos el schedule que viene en el request
+        Schedule schedule = getScheduleForActivityById(idSchedule);
+
         // Validar que la actividad programada existe y pertenece al cronograma
         ScheduledActivity existingScheduledActivity = scheduledActivityRepository
                 .findById(idScheduledActivity).orElseThrow(()-> new ResourceNotFoundException("No se encontró este registro"));
@@ -140,13 +148,15 @@ public class ScheduleService {
         // Obtenemos la actividad que viene en el request
         Activity activity = getActivityById(scheduledActivityRequestDTO.getIdActivity());
 
+        // Verificamos si ya existe una relación entre un schedule y una activity
+        validateUniqueScheduledActivity(schedule.getIdSchedule(), activity.getIdActivity(), idScheduledActivity);
+
+
         // Validar que la actividad programada existe y pertenece al cronograma
         if (!existingScheduledActivity.getSchedule().getIdSchedule().equals(idSchedule)) {
             throw new BadRequestException("La actividad no pertenece al cronograma especificado.");
         }
 
-        // Validar fechas
-        validateDates(scheduledActivityRequestDTO);
 
         // Actualizamos los datos
         scheduledActivityMapper.updateScheduledActivityFromDTO(scheduledActivityRequestDTO, existingScheduledActivity);
@@ -221,9 +231,21 @@ public class ScheduleService {
                 .orElseThrow(()->new ResourceNotFoundException(ACTIVITY_NOT_FOUND));
     }
 
-    private void validateUniqueScheduledActivity(Long scheduleId, Long activityId) {
-        if (scheduledActivityRepository.existsBySchedule_IdScheduleAndActivity_IdActivity(scheduleId, activityId)) {
-            throw new BadRequestException("La actividad ya está asociada al cronograma especificado.");
+    private void validateUniqueScheduledActivity(Long scheduleId, Long activityId, Long excludedScheduledActivityId) {
+        System.out.println("hola");
+        if (excludedScheduledActivityId == null) {
+            boolean exists = scheduledActivityRepository.existsBySchedule_IdScheduleAndActivity_IdActivity(scheduleId, activityId);
+            System.out.println("Validación creación: ScheduleId=" + scheduleId + ", ActivityId=" + activityId + ", Exists=" + exists);
+            if (exists) {
+                throw new BadRequestException("La actividad ya está asociada al cronograma especificado.");
+            }
+        } else {
+            boolean exists = scheduledActivityRepository.existsBySchedule_IdScheduleAndActivity_IdActivityAndScheduledActivityIdNot(
+                    scheduleId, activityId, excludedScheduledActivityId);
+            System.out.println("Validación actualización: ScheduleId=" + scheduleId + ", ActivityId=" + activityId + ", ExcludedScheduledActivityId=" + excludedScheduledActivityId + ", Exists=" + exists);
+            if (exists) {
+                throw new BadRequestException("La actividad ya está asociada al cronograma especificado.");
+            }
         }
     }
 

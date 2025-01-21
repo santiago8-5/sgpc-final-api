@@ -18,6 +18,7 @@ public interface InventoryMapper {
 
     // METODO PARA RESPUESTA
     @Mapping(target = "supplierNames", expression = "java(inventory.getSuppliers().stream().map(Supplier::getName).collect(Collectors.toList()))")
+    @Mapping(target = "supplierId", expression = "java(inventory.getSuppliers().isEmpty() ? null : inventory.getSuppliers().iterator().next().getId_supplier())")
     InventoryResponseDTO toResponseDTO(Inventory inventory);
 
     // METODO PARA ACTUALIZAR

@@ -14,6 +14,7 @@ public interface ClientWorkMapper {
 
     @Mapping(target = "nameClient", source = "client.name")
     @Mapping(target = "nameWork", source = "work.name")
+    @Mapping(target = "clientId", source = "client.idClient")
     ClientWorkResponseDTO toResponseDTO(ClientWork clientWork);
 
     @Mapping(target = "id", ignore = true)

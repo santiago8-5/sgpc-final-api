@@ -19,16 +19,25 @@ public interface ScheduledActivityRepository extends JpaRepository<ScheduledActi
     // Verificar la ducplcidad de actividad en un cronograma
     boolean existsBySchedule_IdScheduleAndActivity_IdActivity(Long scheduleId, Long activityId);
 
+    // Verificar la ducplcidad de actividad en un cronograma al crear y actualizar
+    boolean existsBySchedule_IdScheduleAndActivity_IdActivityAndScheduledActivityIdNot(Long scheduleId, Long activityId, Long excludedScheduledActivityId);
+
     // obtener el detalle de la actividad
     @Query("""
-            SELECT NEW com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduledActivityResponseDTO(\s
+            SELECT NEW com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduledActivityResponseDTO(
             sa.scheduledActivityId,
-            sa.estimatedStartDate, sa.estimatedEndDate, sa.actualStartDate, sa.actualEndDate,\s
-            sa.priority, sa.status, a.name) \s
-            FROM ScheduledActivity sa\s
-            JOIN sa.activity a \s
+            sa.estimatedStartDate,
+            sa.estimatedEndDate,
+            sa.actualStartDate,
+            sa.actualEndDate,
+            sa.priority,\s
+            sa.status,\s
+            a.name,
+            a.idActivity)
+            FROM ScheduledActivity sa
+            JOIN sa.activity a\s
             WHERE sa.schedule.idSchedule = :scheduleId
-           \s""")
+          \s""")
     List<ScheduledActivityResponseDTO> findByScheduleId(@Param("scheduleId") Long scheduleId);
 
 

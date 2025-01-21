@@ -29,6 +29,8 @@ public class InventoryResponseDTO {
 
     private List<String> supplierNames;
 
+    private Long supplierId ;
+
     private LocalDateTime created_at;
 
     private LocalDateTime lastModifiedDate;

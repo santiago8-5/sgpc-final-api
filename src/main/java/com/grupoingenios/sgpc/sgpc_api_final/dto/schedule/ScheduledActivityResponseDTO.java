@@ -27,9 +27,7 @@ public class ScheduledActivityResponseDTO {
 
     private String nameActivity;
 
-    //private String nameSchedule;
+    private Long activityId;
 
-    //private LocalDateTime createdDate;
 
-    //private LocalDateTime localDateTime;
 }

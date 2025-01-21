@@ -14,7 +14,10 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-@Table(name = "scheduledActivity")
+@Table(
+        name = "scheduled_activity",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"schedule_id", "activity_id"})
+)
 @EntityListeners(AuditingEntityListener.class)
 public class ScheduledActivity {
 

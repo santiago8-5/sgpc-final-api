@@ -5,8 +5,6 @@ import com.grupoingenios.sgpc.sgpc_api_final.entity.work.Status;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-
-
 import java.time.LocalDateTime;
 
 @Setter
@@ -17,6 +15,8 @@ public class ClientWorkResponseDTO {
     private Long id;
 
     private String nameClient;
+
+    private Long clientId;
 
     private String nameWork;
 

@@ -18,6 +18,8 @@ public class ActivityResponseDTO {
 
     private String stageName;
 
+    private Long idStage;
+
     private LocalDateTime createdDate;
 
     private LocalDateTime lastModifiedDate;

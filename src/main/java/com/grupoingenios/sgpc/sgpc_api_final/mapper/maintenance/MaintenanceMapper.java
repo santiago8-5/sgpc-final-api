@@ -14,6 +14,7 @@ public interface MaintenanceMapper {
     Maintenance toEntity(MaintenanceRequestDTO maintenanceRequestDTO);
 
     @Mapping(source = "employee.name", target = "nameEmployee")
+    @Mapping(target = "employeeId", source = "employee.idEmployee")
     MaintenanceResponseDTO toResponseDto(Maintenance maintenance);
 
     @Mapping(target = "idMaintenance", ignore = true)

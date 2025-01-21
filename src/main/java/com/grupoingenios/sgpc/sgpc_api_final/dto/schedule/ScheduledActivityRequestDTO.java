@@ -4,7 +4,6 @@ import com.grupoingenios.sgpc.sgpc_api_final.entity.schedule.StatusScheduledActi
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.time.LocalDate;
 
 @Setter

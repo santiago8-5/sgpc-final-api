@@ -17,6 +17,7 @@ public interface WorkMapper {
 
     @Mapping(target = "workTypeName", source = "workType.name")
     @Mapping(target = "supplierNames", expression = "java(work.getSuppliers().stream().map(Supplier::getName).collect(Collectors.toList()))")
+    @Mapping(target = "workTypeId", source = "workType.idWorkType")
     WorkResponseDTO toResponseDto(Work work);
 
     @Mapping(target = "idWork", ignore = true)

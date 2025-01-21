@@ -13,6 +13,7 @@ public interface ActivityMapper {
     Activity toEntity(ActivityRequestDTO activityRequestDTO);
 
     @Mapping(target = "stageName", source = "stage.name")
+    @Mapping(target = "idStage", source = "stage.idStage")
     ActivityResponseDTO toResponseDto(Activity activity);
 
     @Mapping(target = "idActivity", ignore = true)

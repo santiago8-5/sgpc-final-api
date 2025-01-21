@@ -38,6 +38,8 @@ public class WorkResponseDTO {
 
     private String workTypeName;
 
+    private Long workTypeId;
+
     private List<String> supplierNames;
 
     private BigDecimal  latitude;
