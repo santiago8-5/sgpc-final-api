@@ -147,31 +147,7 @@ public class WorkService {
         // Obtener el tipo de obra
         WorkType workType = getWorkTypeId(workRequestDTO.getWorkTypeId());
 
-        // Obtener los nuevos proveedores del request
-        Set<Supplier> newSuppliers = getSuppliersById(workRequestDTO.getSuppliersId());
 
-        // Obtener los proveedores actuales de la tabla intermedia
-        Set<Supplier> currentSuppliers = new HashSet<>(existingWork.getSuppliers());
-
-        // Determinar los proveedores a eliminar y a agregar
-        Set<Supplier> suppliersToRemove = currentSuppliers.stream()
-                .filter(supplier -> !newSuppliers.contains(supplier))
-                .collect(Collectors.toSet());
-
-        Set<Supplier> suppliersToAdd = newSuppliers.stream()
-                .filter(supplier -> !currentSuppliers.contains(supplier))
-                .collect(Collectors.toSet());
-
-        // Actualizar la tabla intermedia manualmente
-        suppliersToRemove.forEach(supplier -> {
-            existingWork.getSuppliers().remove(supplier);
-            supplier.getWorks().remove(existingWork);
-        });
-
-        suppliersToAdd.forEach(supplier -> {
-            existingWork.getSuppliers().add(supplier);
-            supplier.getWorks().add(existingWork);
-        });
 
         // Actualizar otros datos de la obra
         workMapper.updateWorkFromDTO(workRequestDTO, existingWork);

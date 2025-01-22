@@ -93,7 +93,6 @@ public class ScheduleService {
     public ScheduledActivityResponseDTO createAndAssignScheduledActivity(Long idSchedule, ScheduledActivityRequestDTO scheduledActivityRequestDTO){
         // Validar fechas
         validateDates(scheduledActivityRequestDTO);
-        System.out.println("hola");
 
         // Obtenemos el schedule que viene en el request
         Schedule schedule = getScheduleForActivityById(idSchedule);
