@@ -8,6 +8,10 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * DTO que representa la respuesta con información detallada de un cronograma.
+ * Incluye atributos como identificador, nombre, descripción, estado y marcas de tiempo.
+ */
 @Setter
 @Getter
 public class ScheduleResponseDTO {

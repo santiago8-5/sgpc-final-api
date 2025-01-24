@@ -6,6 +6,10 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * DTO que representa la respuesta con información detallada de un registro de mantenimiento.
+ * Incluye atributos como el identificador, la entidad relacionada, tipo de mantenimiento, empleado responsable, costos, y fechas relevantes.
+ */
 @Setter
 @Getter
 public class MaintenanceResponseDTO {

@@ -6,6 +6,10 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
 
+/**
+ * DTO que representa la respuesta con información detallada sobre una actividad programada.
+ * Incluye detalles como fechas estimadas y reales, prioridad, estado, y la actividad asociada.
+ */
 @Setter
 @Getter
 @AllArgsConstructor
@@ -28,6 +32,5 @@ public class ScheduledActivityResponseDTO {
     private String nameActivity;
 
     private Long activityId;
-
 
 }

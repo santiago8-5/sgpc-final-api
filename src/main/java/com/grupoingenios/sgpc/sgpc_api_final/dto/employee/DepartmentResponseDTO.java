@@ -6,6 +6,10 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO que representa la respuesta con información de un departamento.
+ * Incluye detalles como el identificador, nombre, descripción, email y marcas de tiempo.
+ */
 @Getter
 @Setter
 public class DepartmentResponseDTO {

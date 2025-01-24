@@ -5,6 +5,10 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
+/**
+ * DTO que representa la respuesta con información de un puesto de trabajo.
+ * Contiene detalles como el identificador, nombre, descripción, estado y marcas de tiempo.
+ */
 @Setter
 @Getter
 public class PositionResponseDTO {

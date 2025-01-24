@@ -4,6 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
+/**
+ * DTO que representa la respuesta con información de un banco.
+ * Incluye detalles como el identificador, el nombre y las marcas de tiempo.
+ */
 @Setter
 @Getter
 public class BankResponseDTO {

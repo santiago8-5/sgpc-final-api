@@ -1,5 +1,9 @@
 package com.grupoingenios.sgpc.sgpc_api_final.constants;
 
+/**
+ * Clase que define constantes globales para mensajes de error y validación en la aplicación.
+ * Proporciona una única fuente de verdad para los mensajes utilizados en diversas entidades y operaciones.
+ */
 public class AppConstant {
 
     private AppConstant() {}
@@ -80,10 +84,6 @@ public class AppConstant {
     // MENSAJES PARA ETAPAS
     public static final String STAGE_NOT_FOUND = "Etapa no encontrada";
     public static final String STAGE_EXIST_NAME = "El nombre de la etapa ya existe";
-
-
-
-
 
 
 

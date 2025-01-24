@@ -2,9 +2,12 @@ package com.grupoingenios.sgpc.sgpc_api_final.dto.inventory;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
+/**
+ * DTO que representa la respuesta con información de un proveedor.
+ * Incluye detalles como el identificador, nombre, dirección, teléfono, email, RFC, y marcas de tiempo.
+ */
 @Data
 @AllArgsConstructor
 public class SupplierResponseDTO {

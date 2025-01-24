@@ -4,10 +4,13 @@ import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.InputType;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.UnitType;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.inventory.WineryName;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * DTO que representa la respuesta con información detallada de un registro de inventario.
+ * Incluye detalles como identificador, nombre, cantidad, tipo de unidad, insumo, bodega y proveedores asociados.
+ */
 @Data
 public class InventoryResponseDTO {
 

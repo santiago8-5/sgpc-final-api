@@ -46,7 +46,7 @@ public class EmployeeService {
     public List<EmployeeResponseDTO> getAllEmployees(){
         return employeeRepository.findAll()
                 .stream()
-                .map(employeeMapper::toResponseDTO)
+                .map(this::mapToSpecificDTO)
                 .toList();
     }
 
@@ -138,6 +138,7 @@ public class EmployeeService {
         }
     }
 
+
     private Position getPositionById(Long id){
         return positionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(POSITION_NOT_FOUND));
@@ -148,10 +149,11 @@ public class EmployeeService {
                 .orElseThrow(()-> new ResourceNotFoundException(BANK_NOT_FOUND));
     }
 
+    @Transactional(readOnly = true)
     public EmployeeResponseDTO getEmployeeById(Long id){
         Optional<Employee> employee = employeeRepository.findById(id);
         return employee
-                .map(employeeMapper::toResponseDTO)
+                .map(this::mapToSpecificDTO)
                 .orElseThrow(() -> new ResourceNotFoundException(EMPLOYEE_NOT_FOUND));
     }
 
@@ -218,5 +220,15 @@ public class EmployeeService {
     }
 
 
+
+    private EmployeeResponseDTO mapToSpecificDTO(Employee employee) {
+        if (employee instanceof PlantEmployee) {
+            return employeeMapper.toPlantEmployeeResponseDTO((PlantEmployee) employee);
+        } else if (employee instanceof ConstructionWorker) {
+            return employeeMapper.toConstructionWorkerResponseDTO((ConstructionWorker) employee);
+        } else {
+            return employeeMapper.toResponseDTO(employee);
+        }
+    }
 
 }
