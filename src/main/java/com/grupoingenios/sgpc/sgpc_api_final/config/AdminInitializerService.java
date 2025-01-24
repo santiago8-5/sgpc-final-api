@@ -1,13 +1,13 @@
 package com.grupoingenios.sgpc.sgpc_api_final.config;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.user.Rol;
 import com.grupoingenios.sgpc.sgpc_api_final.entity.user.User;
-import com.grupoingenios.sgpc.sgpc_api_final.exception.BadRequestException;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.user.RolRepository;
 import com.grupoingenios.sgpc.sgpc_api_final.repository.user.UserRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Clase de configuración para inicializar un usuario administrador predeterminado en el sistema.
  * Esta clase verifica la existencia del rol de administrador y del usuario con el nombre "ADMIN".
@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  */
 @Configuration
 public class AdminInitializerService {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminInitializerService.class);
 
     private final UserRepository userRepository;
     private final RolRepository rolRepository;
@@ -58,7 +60,7 @@ public class AdminInitializerService {
 
             userRepository.save(adminUser);
         }else{
-            throw new BadRequestException("El usuario ADMIN ya existe");
+            log.info("El usuario ADMIN ya existe. No se requiere acción.");
         }
 
 
