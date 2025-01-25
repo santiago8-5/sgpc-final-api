@@ -117,6 +117,8 @@ public interface EmployeeMapper {
     @Mapping(target = "phones", qualifiedByName = "mapPhonesToDTOs")
     @Mapping(source = "category.idCategory", target = "categoryId")
     @Mapping(source = "position.idPosition", target = "positionId")
+    @Mapping(source = "position.name", target = "positionName")
+    @Mapping(source = "category.name", target = "categoryName")
     ConstructionWorkerResponseDTO toConstructionWorkerResponseDTO(ConstructionWorker constructionWorker);
 
 
