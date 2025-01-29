@@ -1,15 +1,18 @@
-SGPC-API-FINAL
+# SGPC-API-FINAL
 
-🚀 Descripción del Proyecto
+## 🚀 Descripción del Proyecto
 
-SGPC-API-FINAL es una API RESTful desarrollada con Java 21 y Spring Boot para la gestión de un sistema administrativo de una constructora. Su backend proporciona servicios que pueden ser consumidos por aplicaciones cliente como React y otros frameworks.
+SGPC-API-FINAL es una API RESTful desarrollada con **Java 21** y **Spring Boot** para la gestión de un sistema administrativo de una constructora. Su backend proporciona servicios que pueden ser consumidos por aplicaciones cliente como **React** y otros frameworks.
 
-El proyecto está diseñado siguiendo las mejores prácticas de desarrollo y es altamente configurable para su despliegue en entornos de producción.
+El proyecto está diseñado siguiendo **las mejores prácticas de desarrollo** y es **altamente configurable** para su despliegue en entornos de producción.
 
-🏗 Estructura del Proyecto
+---
 
-El proyecto sigue las convenciones estándar para aplicaciones Spring Boot:
+## 🏗 Estructura del Proyecto
 
+El proyecto sigue las convenciones estándar para aplicaciones **Spring Boot**:
+
+```bash
 sgpc-api-final/
 │
 ├── .idea/
@@ -30,25 +33,29 @@ sgpc-api-final/
 └── resources/
     ├── application.properties
     ├── application-dev.properties
+```
 
-⚙ Instalación
+---
 
-🛠 Pre-requisitos
+## ⚙ Instalación
+
+### 🛠 Pre-requisitos
 
 Para ejecutar este proyecto necesitas:
 
-JDK 21 o superior.
+- **JDK 21** o superior.
+- **Maven** o **Gradle**.
+- **Base de datos MySQL** (Puedes utilizar otra, pero en este ejemplo se usa MySQL).
 
-Maven o Gradle.
+---
 
-Base de datos MySQL (Puedes utilizar otra, pero en este ejemplo se usa MySQL).
+## 📌 Configuración de la Base de Datos
 
-📌 Configuración de la Base de Datos
+La aplicación utiliza **variables de entorno** para configurar su base de datos y seguridad.
 
-La aplicación utiliza variables de entorno para configurar su base de datos y seguridad.
+### `application.properties`
 
-application.properties
-
+```properties
 # Nombre de la aplicación
 spring.application.name=sgpc-api-final
 
@@ -65,9 +72,11 @@ jwt.expiration=3600000
 # Propiedades JPA
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 spring.jpa.open-in-view=false
+```
 
-application-dev.properties
+### `application-dev.properties`
 
+```properties
 # Configuración MySQL para el perfil de desarrollo (Ejemplo con Docker)
 spring.datasource.url=${SPRING_DATASOURCE_URL}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
@@ -80,9 +89,11 @@ spring.jpa.show-sql=true
 
 # Configuración de logs para depuración
 logging.level.org.hibernate.SQL=debug
+```
 
-.env.example
+### `.env.example`
 
+```properties
 # Puerto del servidor
 SERVER_PORT=
 
@@ -96,55 +107,83 @@ SPRING_DATASOURCE_PASSWORD=
 
 # Clave secreta JWT
 JWT_SECRET=
+```
 
-🚀 Compilar y Ejecutar la Aplicación
+---
 
-Para compilar y ejecutar con Maven:
+## 🚀 Compilar y Ejecutar la Aplicación
 
+Para compilar y ejecutar con **Maven**:
+
+```bash
 mvn spring-boot:run
+```
 
-Para compilar y ejecutar con Gradle:
+Para compilar y ejecutar con **Gradle**:
 
+```bash
 gradle bootRun
+```
 
 Una vez iniciada, la API estará disponible en:
 
+```bash
 http://localhost:8080
+```
 
-🧑‍💻 Documentación con Swagger
+---
 
-La API cuenta con Swagger para una interacción más fácil con los endpoints.
+## 🧑‍💻 Documentación con Swagger
+
+La API cuenta con **Swagger** para una interacción más fácil con los endpoints.
 
 Puedes acceder a la documentación interactiva en:
 
+```bash
 http://localhost:8080/swagger-ui/index.html
+```
 
 Desde Swagger puedes probar todos los endpoints sin necesidad de herramientas externas.
 
-🔐 Seguridad
+---
 
-La API utiliza JWT (JSON Web Token) para la autenticación. Los usuarios deben incluir su token JWT en cada solicitud después de autenticarse.
+## 🔐 Seguridad
 
-Ejemplo de autenticación
+La API utiliza **JWT (JSON Web Token)** para la autenticación. Los usuarios deben incluir su token JWT en cada solicitud después de autenticarse.
 
+### **Ejemplo de autenticación**
+
+```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -d '{"username":"usuario", "password":"contraseña"}' \
   -H "Content-Type: application/json"
+```
 
-Autorización con JWT
+### **Autorización con JWT**
 
 Cada solicitud protegida debe incluir el header:
 
+```http
 Authorization: Bearer <TOKEN>
+```
 
-🚨 Manejo de Excepciones
+---
 
-La API maneja diversas excepciones personalizadas para una mejor experiencia de usuario y depuración:
+## 🚨 Manejo de Excepciones
 
-ResourceNotFoundException: Cuando un recurso no es encontrado.
+La API maneja diversas **excepciones personalizadas** para una mejor experiencia de usuario y depuración:
 
-BadRequestException: Cuando los datos de entrada son inválidos.
+- **`ResourceNotFoundException`**: Cuando un recurso no es encontrado.
+- **`BadRequestException`**: Cuando los datos de entrada son inválidos.
+- **`EntityInUseException`**: Cuando se intenta eliminar un recurso en uso.
 
-EntityInUseException: Cuando se intenta eliminar un recurso en uso.
+---
 
+## 📌 Conclusión
+
+Este proyecto está diseñado para ser **altamente configurable** mediante **variables de entorno**, lo que facilita su despliegue en entornos como **Docker, Heroku o Kubernetes**.
+
+Adicionalmente, la integración con **Swagger** facilita el uso y prueba de los servicios expuestos.
+
+**✅ Listo para Producción y Desarrollo!**
 
