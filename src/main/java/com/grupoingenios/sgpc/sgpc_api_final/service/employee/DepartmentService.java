@@ -16,6 +16,12 @@ import java.util.List;
 
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los departamentos.
+ * Proporciona métodos para realizar operaciones CRUD sobre los departamentos,
+ * además de validar reglas de negocio como la unicidad del nombre del departamento.
+ */
 @Service
 public class DepartmentService {
 
@@ -29,6 +35,11 @@ public class DepartmentService {
         this.plantEmployeeRepository = plantEmployeeRepository;
     }
 
+    /**
+     * Obtiene todas las categorías de empleados en el sistema.
+     *
+     * @return Lista de departamentos como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<DepartmentResponseDTO> getAllDepartment(){
         return departmentRepository
@@ -38,6 +49,13 @@ public class DepartmentService {
                 .toList();
     }
 
+
+    /**
+     * Obtiene los detalles de un departamento por su ID.
+     *
+     * @param id El ID del departamento a buscar.
+     * @return El departamento correspondiente como DTO.
+     */
     @Transactional(readOnly = true)
     public DepartmentResponseDTO getDepartmentById(Long id){
         Department department = departmentRepository
@@ -45,7 +63,13 @@ public class DepartmentService {
         return departmentMapper.toResponseDto(department);
     }
 
-
+    /**
+     * Crea un nuevo departamento en el sistema.
+     *
+     * @param departmentRequestDTO DTO con los datos del departamento a crear.
+     * @return El departamento creado como DTO.
+     * @throws BadRequestException Si el nombre del departamento ya está en uso.
+     */
     @Transactional
     public DepartmentResponseDTO createDepartment(DepartmentRequestDTO departmentRequestDTO){
         if(departmentRepository.existsByNameIgnoreCase(departmentRequestDTO.getName())){
@@ -59,6 +83,16 @@ public class DepartmentService {
 
     }
 
+
+    /**
+     * Actualiza un departamento existente en el sistema.
+     *
+     * @param id El ID del departamento a actualizar.
+     * @param departmentRequestDTO DTO con los nuevos datos del departamento.
+     * @return El departamento actualizado como DTO.
+     * @throws ResourceNotFoundException Si el departamento no existe.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     @Transactional
     public DepartmentResponseDTO updateDepartment(Long id, DepartmentRequestDTO departmentRequestDTO){
         Department existingDepartment = departmentRepository.findById(id).
@@ -73,22 +107,34 @@ public class DepartmentService {
         return departmentMapper.toResponseDto(departmentUpdated);
     }
 
+
+    /**
+     * Elimina un departamento del sistema.
+     *
+     * @param id El ID del departamento a eliminar.
+     * @throws ResourceNotFoundException Si el departamento no existe.
+     * @throws EntityInUseException Si el departamento tiene empleados asociados.
+     */
     @Transactional
     public void deleteDepartment(Long id){
 
         if(!departmentRepository.existsById(id)){
             throw new ResourceNotFoundException(DEPARTMENT_NOT_FOUND);
         }
-
-        // Verificar si hay empleados asociados a categoría
         if(plantEmployeeRepository.existsByDepartment_IdDepartment(id)){
             throw new EntityInUseException(ENTITY_IN_USE);
         }
-
         departmentRepository.deleteById(id);
     }
 
 
+    /**
+     * Valida que el nuevo nombre de departamento no esté en uso.
+     *
+     * @param currentName El nombre actual del departamento.
+     * @param newName El nuevo nombre del departamento.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName){
         if(!currentName.equalsIgnoreCase(newName) && departmentRepository.existsByNameIgnoreCase(newName)){
             throw new BadRequestException(DEPARTMENT_EXIST_NAME);

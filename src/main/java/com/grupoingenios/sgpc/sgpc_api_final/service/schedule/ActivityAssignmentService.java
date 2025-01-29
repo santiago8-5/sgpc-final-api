@@ -7,7 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
-
+/**
+ * Servicio encargado de gestionar las asignaciones de actividades.
+ * Proporciona métodos para obtener todas las asignaciones de actividades y realizar operaciones relacionadas.
+ */
 @Service
 public class ActivityAssignmentService {
 
@@ -15,12 +18,23 @@ public class ActivityAssignmentService {
     private final ActivityAssignmentMapper activityAssignmentMapper;
 
 
+    /**
+     * Constructor que inicializa el servicio con sus dependencias necesarias.
+     *
+     * @param activityAssignmentRepository El repositorio para las asignaciones de actividades.
+     * @param activityAssignmentMapper El mapper para convertir entre entidades y DTOs de asignaciones de actividades.
+     */
     public ActivityAssignmentService(ActivityAssignmentRepository activityAssignmentRepository, ActivityAssignmentMapper activityAssignmentMapper) {
         this.activityAssignmentRepository = activityAssignmentRepository;
         this.activityAssignmentMapper = activityAssignmentMapper;
 
     }
 
+    /**
+     * Obtiene todas las asignaciones de actividades registradas en el sistema.
+     *
+     * @return Lista de asignaciones de actividades como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<ActivityAssignmentResponseDTO> getAllActivityAssignment(){
         return activityAssignmentRepository

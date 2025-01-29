@@ -5,24 +5,58 @@ import com.grupoingenios.sgpc.sgpc_api_final.entity.schedule.ScheduledActivity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
 
+/**
+ * Repositorio para la entidad `ScheduledActivity`.
+ * Proporciona métodos para realizar operaciones sobre las actividades programadas dentro de un cronograma,
+ * así como validaciones y consultas personalizadas para la gestión de actividades en un cronograma.
+ */
 public interface ScheduledActivityRepository extends JpaRepository<ScheduledActivity, Long> {
 
-    // Verificar si un schedule ya esta asignado a un ScheduledActivity
+    /**
+     * Verifica si un cronograma ya está asignado a una actividad programada.
+     *
+     * @param idSchedule El ID del cronograma.
+     * @return `true` si el cronograma está asignado a una actividad programada, de lo contrario `false`.
+     */
     boolean existsBySchedule_IdSchedule(Long idSchedule);
 
-    //  Verificar si una actividad ya esta asignado a un ScheduledActivity
+    /**
+     * Verifica si una actividad ya está asignada a una actividad programada.
+     *
+     * @param idActivity El ID de la actividad.
+     * @return `true` si la actividad está asignada a una actividad programada, de lo contrario `false`.
+     */
     boolean existsByActivity_IdActivity(Long idActivity);
 
-    // Verificar la ducplcidad de actividad en un cronograma
+    /**
+     * Verifica la duplicidad de una actividad en un cronograma.
+     *
+     * @param scheduleId El ID del cronograma.
+     * @param activityId El ID de la actividad.
+     * @return `true` si la actividad está duplicada en el cronograma, de lo contrario `false`.
+     */
     boolean existsBySchedule_IdScheduleAndActivity_IdActivity(Long scheduleId, Long activityId);
 
-    // Verificar la ducplcidad de actividad en un cronograma al crear y actualizar
+    /**
+     * Verifica la duplicidad de una actividad en un cronograma al crear o actualizar,
+     * excluyendo una actividad programada específica.
+     *
+     * @param scheduleId El ID del cronograma.
+     * @param activityId El ID de la actividad.
+     * @param excludedScheduledActivityId El ID de la actividad programada que debe ser excluida de la verificación.
+     * @return `true` si la actividad está duplicada en el cronograma, excluyendo la actividad programada especificada, de lo contrario `false`.
+     */
     boolean existsBySchedule_IdScheduleAndActivity_IdActivityAndScheduledActivityIdNot(Long scheduleId, Long activityId, Long excludedScheduledActivityId);
 
-    // obtener el detalle de la actividad
+
+    /**
+     * Obtiene los detalles de las actividades programadas de un cronograma.
+     *
+     * @param scheduleId El ID del cronograma.
+     * @return Una lista de `ScheduledActivityResponseDTO` que contiene los detalles de las actividades programadas del cronograma.
+     */
     @Query("""
             SELECT NEW com.grupoingenios.sgpc.sgpc_api_final.dto.schedule.ScheduledActivityResponseDTO(
             sa.scheduledActivityId,
@@ -50,9 +84,11 @@ public interface ScheduledActivityRepository extends JpaRepository<ScheduledActi
      */
 
 
-    /*
-     Consultar todas las actividades por cronograma, solo retorna los detalles que hay en SchceduleActivity con respecto
-     a un schedule, es diferente al findAll().
+    /**
+     * Recupera todas las actividades programadas de un cronograma.
+     *
+     * @param idSchedule El ID del cronograma.
+     * @return Una lista de actividades programadas asociadas al cronograma.
      */
     List<ScheduledActivity> findAllBySchedule_IdSchedule(Long idSchedule);
 

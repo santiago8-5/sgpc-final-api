@@ -13,9 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los empleados.
+ * Proporciona métodos para realizar operaciones CRUD sobre los empleados,
+ * incluyendo la validación de correo electrónico, la asignación de teléfonos y cuentas bancarias.
+ */
 @Service
 public class EmployeeService {
 
@@ -42,6 +47,11 @@ public class EmployeeService {
         this.maintenanceRepository = maintenanceRepository;
     }
 
+    /**
+     * Obtiene todos los empleados del sistema.
+     *
+     * @return Lista de empleados como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<EmployeeResponseDTO> getAllEmployees(){
         return employeeRepository.findAll()
@@ -50,12 +60,25 @@ public class EmployeeService {
                 .toList();
     }
 
+
+    /**
+     * Obtiene solo los identificadores e nombres de todos los empleados.
+     *
+     * @return Lista de empleados con solo id y nombre.
+     */
     @Transactional(readOnly = true)
     public List<EmployeeResponseDTO>  getAllIdAndName() {
         return employeeRepository.findAllIdAndName();
     }
 
 
+    /**
+     * Crea un nuevo empleado en el sistema.
+     *
+     * @param employeeRequestDTO DTO con los datos del empleado a crear.
+     * @return El empleado creado como DTO.
+     * @throws BadRequestException Si el correo electrónico del empleado ya está en uso.
+     */
     @Transactional
     public EmployeeResponseDTO createEmployee(EmployeeRequestDTO employeeRequestDTO) {
         validateEmployeeEmail(employeeRequestDTO.getEmail());
@@ -90,7 +113,14 @@ public class EmployeeService {
 
 
 
-
+    /**
+     * Actualiza los datos de un empleado existente.
+     *
+     * @param id El ID del empleado a actualizar.
+     * @param employeeRequestDTO DTO con los nuevos datos del empleado.
+     * @return El empleado actualizado como DTO.
+     * @throws ResourceNotFoundException Si el empleado no existe.
+     */
     @Transactional
     public EmployeeResponseDTO updateEmployee(Long id, EmployeeRequestDTO employeeRequestDTO) {
         Employee existingEmployee = employeeRepository.findById(id)
@@ -118,6 +148,14 @@ public class EmployeeService {
         return employeeMapper.toResponseDTO(updatedEmployee);
     }
 
+
+    /**
+     * Elimina un empleado del sistema por su ID.
+     *
+     * @param id El ID del empleado a eliminar.
+     * @throws ResourceNotFoundException Si el empleado no existe.
+     * @throws EntityInUseException Si el empleado está asociado a un mantenimiento.
+     */
     @Transactional
     public void deleteEmployeeById(Long id){
         if (!employeeRepository.existsById(id)) {
@@ -127,11 +165,16 @@ public class EmployeeService {
         if(maintenanceRepository.existsByEmployee_IdEmployee(id)){
             throw new EntityInUseException(ENTITY_IN_USE);
         }
-
         employeeRepository.deleteById(id);
     }
 
 
+    /**
+     * Valida que el correo electrónico del empleado no esté en uso.
+     *
+     * @param email El correo electrónico a validar.
+     * @throws BadRequestException Si el correo electrónico ya está en uso.
+     */
     private void validateEmployeeEmail(String email) {
         if (employeeRepository.existsByEmail(email)){
             throw new BadRequestException(EMPLOYEE_EXIST_EMAIL);
@@ -168,6 +211,18 @@ public class EmployeeService {
     }
 
 
+    /**
+     * Asocia teléfonos a un empleado, eliminando los que no están en la nueva lista y agregando los nuevos.
+     * Este método también actualiza la lista de teléfonos del empleado si es necesario.
+     *
+     * @param employee El empleado al que se le van a asociar los teléfonos.
+     * @param phoneDTOS La nueva lista de teléfonos a asociar al empleado.
+     *
+     * Este método realiza las siguientes operaciones:
+     * 1. **Eliminar teléfonos**: Elimina los teléfonos del empleado que no están presentes en la nueva lista de teléfonos.
+     * 2. **Agregar o actualizar teléfonos**: Agrega nuevos teléfonos a la lista del empleado si no están presentes,
+     * o mantiene los existentes si ya están en la lista.
+     */
     private void associatePhones(Employee employee, Set<PhoneRequestDTO> phoneDTOS) {
         if (phoneDTOS != null) {
             // Eliminar teléfonos que ya no están en la nueva lista
@@ -192,6 +247,19 @@ public class EmployeeService {
         }
     }
 
+
+    /**
+     * Asocia cuentas bancarias a un empleado, validando que las cuentas existentes sean válidas y
+     * agregando o actualizando las cuentas según sea necesario.
+     *
+     * @param employee El empleado al que se le van a asociar las cuentas bancarias.
+     * @param accountDTOS La nueva lista de cuentas bancarias a asociar al empleado.
+     *
+     * Este método realiza las siguientes operaciones:
+     * 1. **Validar y eliminar cuentas huérfanas**: Elimina cuentas del empleado que no están presentes en la nueva lista de cuentas.
+     * 2. **Agregar o actualizar cuentas**: Agrega nuevas cuentas si no están presentes, o las actualiza si ya existen.
+     * 3. **Validación de banco**: Si el banco de una cuenta es `null`, se lanza una excepción indicando que el ID del banco no puede ser nulo.
+     */
     private void associateAccounts(Employee employee, Set<AccountRequestDTO> accountDTOS) {
         if (accountDTOS != null) {
             // Validar y remover cuentas huérfanas
@@ -221,6 +289,18 @@ public class EmployeeService {
 
 
 
+    /**
+     * Mapea un empleado a su correspondiente DTO específico según el tipo de empleado.
+     * Este método devuelve un DTO diferente según el tipo de empleado (PLANTA, OBRA, u otros tipos de empleados).
+     *
+     * @param employee El empleado que será mapeado a un DTO específico.
+     * @return El DTO correspondiente al tipo de empleado.
+     *
+     * Este método verifica el tipo de empleado y selecciona el mapeo adecuado:
+     * 1. Si el empleado es de tipo `PlantEmployee`, se usa `toPlantEmployeeResponseDTO`.
+     * 2. Si el empleado es de tipo `ConstructionWorker`, se usa `toConstructionWorkerResponseDTO`.
+     * 3. Si el empleado es de otro tipo, se usa el mapeo estándar `toResponseDTO`.
+     */
     private EmployeeResponseDTO mapToSpecificDTO(Employee employee) {
         if (employee instanceof PlantEmployee) {
             return employeeMapper.toPlantEmployeeResponseDTO((PlantEmployee) employee);

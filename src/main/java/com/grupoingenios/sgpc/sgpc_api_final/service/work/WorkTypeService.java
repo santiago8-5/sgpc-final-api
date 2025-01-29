@@ -16,6 +16,11 @@ import java.util.List;
 
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los tipos de trabajos.
+ * Proporciona métodos para realizar operaciones CRUD sobre los tipos de trabajos,
+ * además de validar reglas de negocio como la unicidad del nombre del tipo de trabajo.
+ */
 @Service
 public class WorkTypeService {
 
@@ -29,6 +34,11 @@ public class WorkTypeService {
         this.workRepository = workRepository;
     }
 
+    /**
+     * Obtiene todos los tipos de trabajos en el sistema.
+     *
+     * @return Lista de tipos de trabajos como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<WorkTypeResponseDTO> getAllWorkTypes(){
         return workTypeRepository
@@ -38,6 +48,14 @@ public class WorkTypeService {
                 .toList();
     }
 
+
+    /**
+     * Crea un nuevo tipo de trabajo en el sistema.
+     *
+     * @param workTypeRequestDTO DTO con los datos del tipo de trabajo a crear.
+     * @return El tipo de trabajo creado como DTO.
+     * @throws BadRequestException Si el nombre del tipo de trabajo ya está en uso.
+     */
     @Transactional
     public WorkTypeResponseDTO createWorkType(WorkTypeRequestDTO workTypeRequestDTO){
         if(workTypeRepository.existsWorkTypeByNameIgnoreCase(workTypeRequestDTO.getName())){
@@ -49,6 +67,16 @@ public class WorkTypeService {
         return workTypeMapper.toResponseDTO(savedWorkType);
     }
 
+
+    /**
+     * Actualiza un tipo de trabajo existente en el sistema.
+     *
+     * @param id El ID del tipo de trabajo a actualizar.
+     * @param workTypeRequestDTO DTO con los nuevos datos del tipo de trabajo.
+     * @return El tipo de trabajo actualizado como DTO.
+     * @throws ResourceNotFoundException Si el tipo de trabajo no existe.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     @Transactional
     public WorkTypeResponseDTO updateWorkType(Long id, WorkTypeRequestDTO workTypeRequestDTO){
 
@@ -64,6 +92,13 @@ public class WorkTypeService {
         return workTypeMapper.toResponseDTO(updatedWorkType);
     }
 
+    /**
+     * Elimina un tipo de trabajo del sistema.
+     *
+     * @param id El ID del tipo de trabajo a eliminar.
+     * @throws ResourceNotFoundException Si el tipo de trabajo no existe.
+     * @throws EntityInUseException Si el tipo de trabajo tiene trabajos asociados.
+     */
     @Transactional
     public void deleteWorkType(Long id){
         if(!workTypeRepository.existsById(id)){
@@ -77,6 +112,14 @@ public class WorkTypeService {
         workTypeRepository.deleteById(id);
     }
 
+
+    /**
+     * Valida que el nuevo nombre del tipo de trabajo no esté en uso.
+     *
+     * @param currentName El nombre actual del tipo de trabajo.
+     * @param newName El nuevo nombre del tipo de trabajo.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName){
         if(!currentName.equalsIgnoreCase(newName) && workTypeRepository.existsWorkTypeByNameIgnoreCase(newName)){
             throw new BadRequestException(WORK_TYPE_EXIST_NAME);

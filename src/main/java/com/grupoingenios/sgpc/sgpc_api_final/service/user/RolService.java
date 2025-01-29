@@ -14,7 +14,10 @@ import java.util.List;
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.ROLE_EXIST_NAME;
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.ROLE_NOT_FOUND;
 
-
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los roles de usuario en el sistema.
+ * Proporciona métodos para realizar operaciones CRUD sobre los roles, además de validar reglas de negocio como la unicidad del nombre del rol.
+ */
 @Service
 public class RolService {
 
@@ -26,6 +29,12 @@ public class RolService {
         this.rolMapper = rolMapper;
     }
 
+
+    /**
+     * Obtiene todos los roles en el sistema.
+     *
+     * @return Lista de roles como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<RolResponseDTO> getAllRoles(){
         return rolRepository
@@ -35,6 +44,14 @@ public class RolService {
                 .toList();
     }
 
+
+    /**
+     * Crea un nuevo rol en el sistema.
+     *
+     * @param rolRequestDTO DTO con los datos del rol a crear.
+     * @return El rol creado como DTO.
+     * @throws BadRequestException Si el nombre del rol ya está en uso.
+     */
     @Transactional
     public RolResponseDTO createRol(RolRequestDTO rolRequestDTO){
 
@@ -50,6 +67,15 @@ public class RolService {
     }
 
 
+    /**
+     * Actualiza un rol existente en el sistema.
+     *
+     * @param id ID del rol a actualizar.
+     * @param rolRequestDTO DTO con los nuevos datos del rol.
+     * @return El rol actualizado como DTO.
+     * @throws ResourceNotFoundException Si el rol no existe.
+     * @throws BadRequestException Si el nuevo nombre de rol ya está en uso.
+     */
     @Transactional
     public RolResponseDTO updateRol(Long id, RolRequestDTO rolRequestDTO){
 
@@ -68,6 +94,12 @@ public class RolService {
 
     }
 
+    /**
+     * Elimina un rol del sistema.
+     *
+     * @param id ID del rol a eliminar.
+     * @throws ResourceNotFoundException Si el rol no existe.
+     */
     @Transactional
     public void deleteRol(Long id) {
         if(!rolRepository.existsById(id)){
@@ -76,7 +108,13 @@ public class RolService {
         rolRepository.deleteById(id);
     }
 
-
+    /**
+     * Valida que el nombre del rol no esté ya en uso.
+     *
+     * @param currentName El nombre actual del rol.
+     * @param newName El nuevo nombre del rol.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName){
         if(!currentName.equalsIgnoreCase(newName) && rolRepository.existsByNameIgnoreCase(newName)){
             throw new BadRequestException(ROLE_EXIST_NAME);

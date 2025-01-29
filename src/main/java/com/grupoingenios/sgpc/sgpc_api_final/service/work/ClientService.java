@@ -16,6 +16,12 @@ import java.util.Optional;
 
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los clientes.
+ * Proporciona métodos para realizar operaciones CRUD sobre los clientes,
+ * además de validar reglas de negocio como la unicidad del RFC y el email de los clientes.
+ */
 @Service
 public class ClientService {
 
@@ -29,6 +35,12 @@ public class ClientService {
         this.clientWorkRepository = clientWorkRepository;
     }
 
+
+    /**
+     * Obtiene todos los clientes en el sistema.
+     *
+     * @return Lista de clientes como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<ClientResponseDTO> getAllClients(){
         return clientRepository
@@ -38,6 +50,14 @@ public class ClientService {
                 .toList();
     }
 
+
+    /**
+     * Crea un nuevo cliente en el sistema.
+     *
+     * @param clientRequestDTO DTO con los datos del cliente a crear.
+     * @return El cliente creado como DTO.
+     * @throws BadRequestException Si el email o el RFC del cliente ya están en uso.
+     */
     @Transactional
     public ClientResponseDTO createClient(ClientRequestDTO clientRequestDTO){
         if (clientRepository.existsByEmail(clientRequestDTO.getEmail())) {
@@ -55,31 +75,42 @@ public class ClientService {
         return clientMapper.toResponseDTO(savedClient);
     }
 
+
+    /**
+     * Actualiza un cliente existente en el sistema.
+     *
+     * @param id El ID del cliente a actualizar.
+     * @param clientRequestDTO DTO con los nuevos datos del cliente.
+     * @return El cliente actualizado como DTO.
+     * @throws ResourceNotFoundException Si el cliente no existe.
+     * @throws BadRequestException Si el nuevo email o RFC ya están en uso.
+     */
     @Transactional
     public ClientResponseDTO updateClient(Long id, ClientRequestDTO clientRequestDTO){
 
-        // Recuperando el cliente existente
         Client existingClient = clientRepository
                 .findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException(CLIENT_NOT_FOUND));
 
-        // Validando único rfc
         validateUniqueRfc(existingClient.getRfc(), clientRequestDTO.getRfc());
 
-        // Validando único email
         validateUniqueEmail(existingClient.getEmail(), clientRequestDTO.getEmail());
 
-        // Actualizar los campos
         clientMapper.updatedClientFromDTO(clientRequestDTO, existingClient);
 
-        // Guardamos los da datos modificados
         Client updatedClient = clientRepository.save(existingClient);
 
-        // Devolvemos la respuesta
         return clientMapper.toResponseDTO(updatedClient);
     }
 
 
+    /**
+     * Obtiene los detalles de un cliente por su ID.
+     *
+     * @param id El ID del cliente a buscar.
+     * @return El cliente correspondiente como DTO.
+     * @throws ResourceNotFoundException Si el cliente no existe.
+     */
     @Transactional(readOnly = true)
     public ClientResponseDTO getClientById(Long id){
         Optional<Client> client = clientRepository.findById(id);
@@ -87,6 +118,14 @@ public class ClientService {
                 .orElseThrow(()-> new ResourceNotFoundException(CLIENT_NOT_FOUND));
     }
 
+
+    /**
+     * Elimina un cliente del sistema.
+     *
+     * @param id El ID del cliente a eliminar.
+     * @throws ResourceNotFoundException Si el cliente no existe.
+     * @throws EntityInUseException Si el cliente tiene trabajos asociados.
+     */
     @Transactional
     public void deleteClient(Long id){
         if(!clientRepository.existsById(id)){
@@ -101,19 +140,30 @@ public class ClientService {
 
     }
 
-
+    /**
+     * Valida que el RFC no esté en uso.
+     *
+     * @param currentRfc El RFC actual del cliente.
+     * @param newRfc El nuevo RFC del cliente.
+     * @throws BadRequestException Si el nuevo RFC ya está en uso.
+     */
     private void validateUniqueRfc(String currentRfc, String newRfc){
         if(!currentRfc.equalsIgnoreCase(newRfc) && clientRepository.existsByRfcIgnoreCase(newRfc)){
             throw new BadRequestException(CLIENT_EXIST_RFC);
         }
     }
 
+    /**
+     * Valida que el email no esté en uso.
+     *
+     * @param currentEmail El email actual del cliente.
+     * @param newEmail El nuevo email del cliente.
+     * @throws BadRequestException Si el nuevo email ya está en uso.
+     */
     private void validateUniqueEmail(String currentEmail, String newEmail){
         if(!currentEmail.equalsIgnoreCase(newEmail) && clientRepository.existsByRfcIgnoreCase(newEmail)){
             throw new BadRequestException(CLIENT_EXIST_EMAIL);
         }
     }
-
-
 
 }

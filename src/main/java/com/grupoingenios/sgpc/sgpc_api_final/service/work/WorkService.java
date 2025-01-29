@@ -40,7 +40,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
-
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con las obras.
+ * Proporciona métodos para realizar operaciones CRUD sobre las obras,
+ * asignar clientes, asignar cronogramas y otros procedimientos asociados a las obras.
+ */
 @Service
 public class WorkService {
 
@@ -58,6 +62,22 @@ public class WorkService {
     private final ActivityRepository activityRepository;
 
 
+    /**
+     * Constructor que inicializa el servicio con los repositorios y mappers necesarios para las operaciones CRUD.
+     *
+     * @param workRepository Repositorio para gestionar las obras.
+     * @param workMapper Mapper para convertir entre entidades y DTOs de obras.
+     * @param workTypeRepository Repositorio para gestionar los tipos de obra.
+     * @param scheduleRepository Repositorio para gestionar los cronogramas.
+     * @param scheduleMapper Mapper para convertir entre entidades y DTOs de cronogramas.
+     * @param supplierRepository Repositorio para gestionar los proveedores.
+     * @param clientRepository Repositorio para gestionar los clientes.
+     * @param clientWorkRepository Repositorio para gestionar las asignaciones de clientes a obras.
+     * @param clientWorkMapper Mapper para convertir entre entidades y DTOs de asignaciones de clientes a obras.
+     * @param scheduledActivityRepository Repositorio para gestionar las actividades programadas.
+     * @param scheduledActivityMapper Mapper para convertir entre entidades y DTOs de actividades programadas.
+     * @param activityRepository Repositorio para gestionar las actividades.
+     */
     public WorkService(WorkRepository workRepository, WorkMapper workMapper, WorkTypeRepository workTypeRepository,
                        ScheduleRepository scheduleRepository, ScheduleMapper scheduleMapper, SupplierRepository supplierRepository,
                        ClientRepository clientRepository, ClientWorkRepository clientWorkRepository, ClientWorkMapper clientWorkMapper, ScheduledActivityRepository scheduledActivityRepository,
@@ -76,11 +96,23 @@ public class WorkService {
         this.activityRepository = activityRepository;
     }
 
+    /**
+     * Obtiene todas las asignaciones de clientes a una obra.
+     *
+     * @param workId El ID de la obra.
+     * @return Lista de asignaciones de clientes a la obra como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<ClientWorkResponseDTO> getClientWorksByWorkId(Long workId) {
         return workRepository.findAllClientWorkDTOsByWorkId(workId);
     }
 
+
+    /**
+     * Obtiene todas las obras en el sistema.
+     *
+     * @return Lista de obras como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<WorkResponseDTO> getAllWorks(){
         return workRepository
@@ -90,6 +122,15 @@ public class WorkService {
                 .toList();
     }
 
+
+
+    /**
+     * Obtiene los detalles de una obra por su ID.
+     *
+     * @param id El ID de la obra a buscar.
+     * @return El DTO de la obra correspondiente.
+     * @throws ResourceNotFoundException Si la obra no existe.
+     */
     @Transactional(readOnly = true)
     public WorkResponseDTO getWorkById(Long id) {
         Work work = workRepository
@@ -106,25 +147,28 @@ public class WorkService {
     }
 
 
+    /**
+     * Crea una nueva obra y la guarda en la base de datos.
+     *
+     * @param workRequestDTO DTO con los datos de la nueva obra.
+     * @return El DTO de la obra creada.
+     * @throws BadRequestException Si el nombre de la obra ya está en uso.
+     */
     @Transactional
     public WorkResponseDTO createWork(WorkRequestDTO workRequestDTO){
 
-        // Validar nombre unico
         if(workRepository.existsByNameIgnoreCase(workRequestDTO.getName())){
             throw  new BadRequestException(WORK_EXIST_NAME);
         }
 
-        // Obtener los proveedores especificados en suppliersId
         Set<Supplier> suppliers = getSuppliersById(workRequestDTO.getSuppliersId());
 
-        // Obtener WorkType por id
         WorkType workType = getWorkTypeId(workRequestDTO.getWorkTypeId());
 
         Work work = workMapper.toEntity(workRequestDTO);
         work.setWorkCode(generatedCode(work));
         work.setWorkType(workType);
 
-        // Asignar los suppliers al work
         work.setSuppliers(suppliers);
 
         Work savedWork = workRepository.save(work);
@@ -133,60 +177,72 @@ public class WorkService {
 
     }
 
+
+    /**
+     * Actualiza una obra existente en el sistema.
+     *
+     * @param id El ID de la obra a actualizar.
+     * @param workRequestDTO DTO con los nuevos datos de la obra.
+     * @return El DTO de la obra actualizada.
+     * @throws ResourceNotFoundException Si la obra no existe.
+     * @throws BadRequestException Si el nombre de la obra ya está en uso.
+     */
     @Transactional
     public WorkResponseDTO updateWork(Long id, WorkRequestDTO workRequestDTO) {
 
-        // Obtener la obra existente
         Work existingWork = workRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
 
-        // Validar que el nombre sea único
         validateUniqueName(existingWork.getName(), workRequestDTO.getName());
 
-        // Obtener el tipo de obra
         WorkType workType = getWorkTypeId(workRequestDTO.getWorkTypeId());
 
-
-
-        // Actualizar otros datos de la obra
         workMapper.updateWorkFromDTO(workRequestDTO, existingWork);
         existingWork.setWorkType(workType);
         existingWork.setWorkCode(generatedCode(existingWork));
 
-        // Guardar cambios
         workRepository.save(existingWork);
 
         return workMapper.toResponseDto(existingWork);
     }
 
-    // CREAR y ASIGNAR SCHEDULE
+
+    /**
+     * Crea y asigna un cronograma a una obra.
+     *
+     * @param idWork El ID de la obra a la que se asignará el cronograma.
+     * @param scheduleRequestDTO DTO con los datos del cronograma.
+     * @return El DTO del cronograma creado y asignado.
+     * @throws BadRequestException Si el cronograma ya existe.
+     */
     @Transactional
     public ScheduleResponseDTO createAndAssignSchedule(Long idWork, ScheduleRequestDTO scheduleRequestDTO){
 
-        // Obtenemos la obra por id
         Work work = existWorkById(idWork);
 
-        // Comprobamos la existencia del registro
         if(scheduleRepository.existsByNameIgnoreCase(scheduleRequestDTO.getName())){
             throw new BadRequestException(SCHEDULE_EXIST_NAME);
         }
 
-        // Crear el cronograma a partir del DTO
         Schedule schedule = scheduleMapper.toEntity(scheduleRequestDTO);
 
-        // Guardar el cronograma
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
-        // Asignar el cronograma a la obra y guardar la obra
         work.setSchedule(savedSchedule);
         workRepository.save(work);
 
-        // Retornamos el DTO de respuesta
         return scheduleMapper.toResponseDto(savedSchedule);
 
     }
 
+
+    /**
+     * Elimina una obra del sistema.
+     *
+     * @param id El ID de la obra a eliminar.
+     * @throws ResourceNotFoundException Si la obra no existe.
+     */
     @Transactional
     public void deleteWork(Long id){
         if(!workRepository.existsById(id)){
@@ -196,50 +252,57 @@ public class WorkService {
     }
 
 
-    // Asignar un cliente una obra
+    /**
+     * Asigna un cliente a una obra.
+     * Este método verifica si el cliente y la obra existen y si la relación cliente-obra no está duplicada antes de crearla.
+     *
+     * @param workId El ID de la obra a la que se asignará el cliente.
+     * @param clientWorkRequestDTO El DTO que contiene los datos del cliente y la obra.
+     * @return El DTO de la asignación de cliente a obra.
+     * @throws EntityInUseException Si la relación cliente-obra ya existe.
+     */
     @Transactional
     public ClientWorkResponseDTO assignClientToWork(Long workId,  ClientWorkRequestDTO clientWorkRequestDTO){
 
-        // Verificar y obtener la existencia de la obra
         Work work = getWorForClientById(workId);
 
-        // Verificar y obtener la existencia del cliente
         Client client = getClientById(clientWorkRequestDTO.getClientId());
 
-        // Verificar si ya existe la relación
         if(clientWorkRepository.existsByClient_IdAndWork_Id(clientWorkRequestDTO.getClientId(), clientWorkRequestDTO.getWorkId())){
             throw new EntityInUseException("El cliente ya está asignado a esta obra.");
         }
 
-        // Convertir el dto a entidad
         ClientWork clientWork = clientWorkMapper.toEntity(clientWorkRequestDTO);
         clientWork.setWork(work);
         clientWork.setClient(client);
 
-        // guardar la entidad
         ClientWork savedClientWork = clientWorkRepository.save(clientWork);
 
-        // Retornamos la respuesta
         return clientWorkMapper.toResponseDTO(savedClientWork);
     }
 
 
-    // Actualizar un cliente en una obra
+    /**
+     * Actualiza la asignación de un cliente a una obra.
+     * Este método permite modificar una relación existente entre un cliente y una obra.
+     *
+     * @param workId El ID de la obra a la que está asignado el cliente.
+     * @param clientWorkId El ID de la asignación cliente-obra que se desea actualizar.
+     * @param clientWorkRequestDTO El DTO con los nuevos datos para la asignación.
+     * @return El DTO actualizado de la asignación de cliente a obra.
+     * @throws ResourceNotFoundException Si la relación cliente-obra no existe.
+     */
     @Transactional
     public ClientWorkResponseDTO updateClientWork(Long workId, Long clientWorkId, ClientWorkRequestDTO clientWorkRequestDTO){
 
-        // Buscar la relación existente
         ClientWork existingClientWork = clientWorkRepository.findById(clientWorkId)
                 .orElseThrow(() -> new ResourceNotFoundException("Relación no encontrada"));
 
-        // Verificar y obtener la existencia del cliente
         Client client = getClientById(clientWorkRequestDTO.getClientId());
 
-        // Actualizar
         clientWorkMapper.updatedClientWorkFromDTO(clientWorkRequestDTO, existingClientWork);
         existingClientWork.setClient(client);
 
-        // Guardando los cambios
         ClientWork updatedClientWork = clientWorkRepository.save(existingClientWork);
 
         return clientWorkMapper.toResponseDTO(updatedClientWork);
@@ -247,7 +310,13 @@ public class WorkService {
     }
 
 
-    // Eliminar un cliente en una obra
+    /**
+     * Elimina una asignación de cliente a una obra.
+     * Este método elimina la relación entre un cliente y una obra.
+     *
+     * @param id El ID de la asignación cliente-obra que se desea eliminar.
+     * @throws ResourceNotFoundException Si la relación cliente-obra no existe.
+     */
     @Transactional
     public void deleteClientWork(Long id){
         if(!clientWorkRepository.existsById(id)){
@@ -256,18 +325,21 @@ public class WorkService {
         clientWorkRepository.deleteById(id);
     }
 
-
-    // Asignar un supplier a una obra
+    /**
+     * Asigna un proveedor a una obra.
+     * Este método verifica si el proveedor ya está asignado a la obra antes de agregarlo.
+     *
+     * @param workId El ID de la obra a la que se asignará el proveedor.
+     * @param supplierId El ID del proveedor a asignar.
+     * @throws EntityInUseException Si el proveedor ya está asignado a la obra.
+     */
     @Transactional
     public void assignSupplierToWork(Long workId, Long supplierId) {
 
-        // Verificar y obtener la existencia de la obra
         Work work = getWorForClientById(workId);
 
-        // Recuperar el proveedor
         Supplier supplier = getSupplierById(supplierId);
 
-        // Verificar si el proveedor ya está asignado
         if (work.getSuppliers().contains(supplier)) {
             throw new EntityInUseException("El proveedor ya está asignado a esta obra.");
         }
@@ -279,11 +351,17 @@ public class WorkService {
         // Sincronizar la colección
         work.setSuppliers(suppliers);
 
-        // Guardar los cambios
         workRepository.save(work);
     }
 
 
+    /**
+     * Recupera un proveedor por su ID.
+     *
+     * @param id El ID del proveedor.
+     * @return El proveedor correspondiente al ID.
+     * @throws ResourceNotFoundException Si el proveedor no es encontrado.
+     */
     private Supplier getSupplierById(Long id){
         return supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(SUPPLIER_NOT_FOUND));
@@ -291,28 +369,67 @@ public class WorkService {
 
 
 
+    /**
+     * Recupera el tipo de trabajo por su ID.
+     *
+     * @param id El ID del tipo de trabajo.
+     * @return El tipo de trabajo correspondiente al ID.
+     * @throws ResourceNotFoundException Si el tipo de trabajo no es encontrado.
+     */
     private WorkType getWorkTypeId(Long id){
         return workTypeRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException(WORK_TYPE_NOT_FOUND));
     }
 
+
+    /**
+     * Recupera una obra por su ID.
+     *
+     * @param id El ID de la obra.
+     * @return La obra correspondiente al ID.
+     * @throws ResourceNotFoundException Si la obra no es encontrada.
+     */
     private Work getWorForClientById(Long id){
         return  workRepository
                 .findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException(WORK_NOT_FOUND));
     }
 
+
+    /**
+     * Recupera un cliente por su ID.
+     *
+     * @param id El ID del cliente.
+     * @return El cliente correspondiente al ID.
+     * @throws ResourceNotFoundException Si el cliente no es encontrado.
+     */
     private Client getClientById(Long id){
         return clientRepository
                 .findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException(CLIENT_NOT_FOUND));
     }
 
+
+    /**
+     * Verifica si una obra existe por su ID.
+     *
+     * @param idWork El ID de la obra.
+     * @return La obra correspondiente al ID.
+     * @throws ResourceNotFoundException Si la obra no es encontrada.
+     */
     private Work existWorkById(Long idWork){
         return workRepository.findById(idWork)
                 .orElseThrow(()-> new ResourceNotFoundException(WORK_NOT_FOUND));
     }
 
+
+    /**
+     * Valida si el nombre de la obra es único.
+     *
+     * @param currentName El nombre actual de la obra.
+     * @param newName El nuevo nombre de la obra.
+     * @throws BadRequestException Si el nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName) {
         if (!currentName.equalsIgnoreCase(newName) &&
                 workRepository.existsByNameIgnoreCase(newName)) {
@@ -320,11 +437,27 @@ public class WorkService {
         }
     }
 
+
+    /**
+     * Genera un código único para una obra.
+     * El formato es: PROJ-[año]-[ID].
+     *
+     * @param work La obra para la cual se genera el código.
+     * @return El código único generado para la obra.
+     */
     public String generatedCode(Work work){
         // Ejemplo de formato: PROJ-[año]-[ID]
         return "OBRA-" + LocalDate.now().getYear() + "-" + (workRepository.count() + 1);
     }
 
+
+    /**
+     * Recupera un conjunto de proveedores a partir de sus IDs.
+     *
+     * @param suppliersId El conjunto de IDs de los proveedores.
+     * @return Un conjunto de proveedores correspondientes a los IDs proporcionados.
+     * @throws ResourceNotFoundException Si algún proveedor no es encontrado.
+     */
     public Set<Supplier> getSuppliersById(Set<Long> suppliersId) {
         if (suppliersId == null || suppliersId.isEmpty()) {
             return new HashSet<>();
@@ -336,6 +469,14 @@ public class WorkService {
     }
 
 
+
+    /**
+     * Recupera el cronograma asociado a una obra por su ID.
+     *
+     * @param workId El ID de la obra.
+     * @return El cronograma asociado a la obra.
+     * @throws ResourceNotFoundException Si no existe un cronograma para la obra.
+     */
     @Transactional(readOnly = true)
     public ScheduleResponseDTO getScheduleByWorkId(Long workId) {
         Work work = workRepository.findById(workId)
@@ -348,14 +489,19 @@ public class WorkService {
         return scheduleMapper.toResponseDto(work.getSchedule());
     }
 
-    // RETORNAR LAS ACTIVIDADES DE UN CRONOGRAMA, EN EL CONTEXTO DE UNA OBRA
+
+    /**
+     * Recupera todas las actividades programadas de una obra.
+     *
+     * @param idWork El ID de la obra.
+     * @return Una lista de actividades programadas asociadas al cronograma de la obra.
+     * @throws ResourceNotFoundException Si no hay un cronograma asociado a la obra.
+     */
     @Transactional(readOnly = true)
     public List<ScheduledActivityResponseDTO> getScheduledActivitiesByWorkId(Long idWork) {
-        // Obtener la obra y verificar su existencia
         Work work = workRepository.findById(idWork)
                 .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
 
-        // Verificar si tiene un cronograma asociado
         if (work.getSchedule() == null) {
             throw new ResourceNotFoundException("No hay un cronograma relacionado a esta obra");
         }
@@ -370,10 +516,18 @@ public class WorkService {
     }
 
 
-    // Crear una atividad programada
+
+    /**
+     * Crea una nueva actividad programada para una obra.
+     * Este método valida que la obra tenga un cronograma asociado y que la actividad no esté ya asociada al cronograma.
+     *
+     * @param idWork El ID de la obra a la que se asignará la actividad.
+     * @param scheduledActivityRequestDTO El DTO que contiene los detalles de la actividad programada.
+     * @return El DTO de la actividad programada creada.
+     * @throws BadRequestException Si el cronograma de la obra no existe o si la actividad ya está asociada.
+     */
     @Transactional
     public ScheduledActivityResponseDTO createScheduledActivityFromWork(Long idWork, ScheduledActivityRequestDTO scheduledActivityRequestDTO) {
-        // Validar y obtener la obra
         Work work = workRepository.findById(idWork)
                 .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
 
@@ -386,7 +540,6 @@ public class WorkService {
         // Validar fechas
         validateDates(scheduledActivityRequestDTO);
 
-        // Obtener la actividad del request
         Activity activity = getActivityById(scheduledActivityRequestDTO.getIdActivity());
 
         // Verificar si ya existe la relación entre el cronograma y la actividad
@@ -397,17 +550,24 @@ public class WorkService {
         scheduledActivity.setSchedule(schedule);
         scheduledActivity.setActivity(activity);
 
-        // Guardar la actividad programada
         ScheduledActivity savedScheduledActivity = scheduledActivityRepository.save(scheduledActivity);
 
-        // Mapear a DTO y devolver la respuesta
         return scheduledActivityMapper.toResponseDto(savedScheduledActivity);
     }
 
-    // Actualizar actividad programada
+
+    /**
+     * Actualiza una actividad programada para una obra.
+     *
+     * @param idWork El ID de la obra a la que pertenece la actividad.
+     * @param idScheduledActivity El ID de la actividad programada a actualizar.
+     * @param scheduledActivityRequestDTO El DTO con los nuevos datos de la actividad.
+     * @return El DTO actualizado de la actividad programada.
+     * @throws ResourceNotFoundException Si la actividad o la obra no son encontrados.
+     * @throws BadRequestException Si la actividad no pertenece al cronograma de la obra.
+     */
     @Transactional
     public ScheduledActivityResponseDTO updateScheduledActivityFromWork(Long idWork, Long idScheduledActivity, ScheduledActivityRequestDTO scheduledActivityRequestDTO) {
-        // Validar y obtener la obra
         Work work = workRepository.findById(idWork)
                 .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
 
@@ -433,22 +593,27 @@ public class WorkService {
         scheduledActivityMapper.updateScheduledActivityFromDTO(scheduledActivityRequestDTO, existingScheduledActivity);
         existingScheduledActivity.setActivity(activity);
 
-        // Guardar la actividad actualizada
         ScheduledActivity updatedScheduledActivity = scheduledActivityRepository.save(existingScheduledActivity);
 
-        // Mapear a DTO y devolver la respuesta
         return scheduledActivityMapper.toResponseDto(updatedScheduledActivity);
     }
 
-    // Borrar actividad programada
+
+    /**
+     * Elimina una actividad programada de una obra.
+     *
+     * @param idWork El ID de la obra a la que pertenece la actividad programada.
+     * @param idScheduledActivity El ID de la actividad programada a eliminar.
+     * @throws ResourceNotFoundException Si la actividad o la obra no son encontrados.
+     * @throws BadRequestException Si la actividad no pertenece al cronograma de la obra.
+     */
     @Transactional
     public void deleteScheduledActivityFromWork(Long idWork, Long idScheduledActivity) {
-        // Validar y obtener la obra
         Work work = workRepository.findById(idWork)
                 .orElseThrow(() -> new ResourceNotFoundException(WORK_NOT_FOUND));
 
-        // Verificar si tiene un cronograma asociado
         Schedule schedule = work.getSchedule();
+
         if (schedule == null) {
             throw new BadRequestException("No hay un cronograma asociado a esta obra.");
         }
@@ -461,23 +626,32 @@ public class WorkService {
             throw new BadRequestException("La actividad no pertenece al cronograma de esta obra.");
         }
 
-        // Eliminar la actividad programada
         scheduledActivityRepository.delete(scheduledActivity);
     }
 
-    // Obtener actividad programada
+    /**
+     * Recupera una actividad programada específica de una obra.
+     *
+     * @param idWork El ID de la obra.
+     * @param idScheduledActivity El ID de la actividad programada.
+     * @return El DTO de la actividad programada.
+     * @throws ResourceNotFoundException Si la actividad no es encontrada.
+     */
     @Transactional(readOnly = true)
     public ScheduledActivityResponseDTO getScheduledActivityFromWork(Long idWork, Long idScheduledActivity) {
-        // Recuperar directamente la actividad programada
         ScheduledActivity scheduledActivity = scheduledActivityRepository.findById(idScheduledActivity)
                 .orElseThrow(() -> new ResourceNotFoundException("Detalles de actividad programada no encontrados."));
 
-        // Mapear a DTO y retornar
         return scheduledActivityMapper.toResponseDto(scheduledActivity);
     }
 
 
-
+    /**
+     * Valida que las fechas de inicio y fin de una actividad programada sean correctas.
+     *
+     * @param dto El DTO que contiene las fechas.
+     * @throws BadRequestException Si las fechas no son válidas.
+     */
     private void validateDates(ScheduledActivityRequestDTO dto) {
         if (dto.getEstimatedStartDate().isAfter(dto.getEstimatedEndDate())) {
             throw new BadRequestException("La fecha estimada de inicio no puede ser posterior a la fecha estimada de fin.");
@@ -487,12 +661,27 @@ public class WorkService {
         }
     }
 
+    /**
+     * Recupera una actividad por su ID.
+     *
+     * @param id El ID de la actividad.
+     * @return La actividad correspondiente al ID.
+     * @throws ResourceNotFoundException Si la actividad no es encontrada.
+     */
     private Activity getActivityById(Long id){
         return activityRepository
                 .findById(id)
                 .orElseThrow(()->new ResourceNotFoundException(ACTIVITY_NOT_FOUND));
     }
 
+
+    /**
+     * Verifica si la actividad ya está asociada al cronograma especificado.
+     *
+     * @param scheduleId El ID del cronograma.
+     * @param activityId El ID de la actividad.
+     * @throws BadRequestException Si la actividad ya está asociada al cronograma.
+     */
     private void validateUniqueScheduledActivity(Long scheduleId, Long activityId) {
         if (scheduledActivityRepository.existsBySchedule_IdScheduleAndActivity_IdActivity(scheduleId, activityId)) {
             throw new BadRequestException("La actividad ya está asociada al cronograma especificado.");

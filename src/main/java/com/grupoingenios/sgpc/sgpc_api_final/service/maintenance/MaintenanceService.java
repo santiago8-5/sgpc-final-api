@@ -15,11 +15,15 @@ import com.grupoingenios.sgpc.sgpc_api_final.repository.maintenance.MaintenanceR
 import com.grupoingenios.sgpc.sgpc_api_final.repository.vehicle.VehicleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con el mantenimiento de vehículos y maquinaria.
+ * Proporciona métodos para realizar operaciones CRUD sobre el mantenimiento,
+ * verificando la existencia de la entidad relacionada (vehículo o maquinaria)
+ * y la asignación de empleados responsables.
+ */
 @Service
 public class MaintenanceService {
 
@@ -38,6 +42,11 @@ public class MaintenanceService {
         this.employeeRepository = employeeRepository;
     }
 
+    /**
+     * Obtiene todos los mantenimientos registrados en el sistema.
+     *
+     * @return Lista de mantenimientos como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<MaintenanceResponseDTO> getAllMaintenance(){
         return maintenanceRepository
@@ -48,6 +57,13 @@ public class MaintenanceService {
 
     }
 
+    /**
+     * Crea un nuevo mantenimiento en el sistema.
+     *
+     * @param maintenanceRequestDTO DTO con los datos del mantenimiento a crear.
+     * @return El mantenimiento creado como DTO.
+     * @throws ResourceNotFoundException Si no se encuentra la entidad relacionada (vehículo o maquinaria).
+     */
     @Transactional
     public MaintenanceResponseDTO createMaintenance(MaintenanceRequestDTO maintenanceRequestDTO){
 
@@ -72,12 +88,21 @@ public class MaintenanceService {
         return maintenanceMapper.toResponseDto(savedMaintenance);
     }
 
+
+    /**
+     * Actualiza un mantenimiento existente en el sistema.
+     *
+     * @param id El ID del mantenimiento a actualizar.
+     * @param maintenanceRequestDTO DTO con los nuevos datos del mantenimiento.
+     * @return El mantenimiento actualizado como DTO.
+     * @throws ResourceNotFoundException Si no se encuentra el mantenimiento o la entidad relacionada.
+     * @throws BadRequestException Si el tipo de entidad relacionada no es válido.
+     */
     @Transactional
     public MaintenanceResponseDTO updateMaintenance(Long id, MaintenanceRequestDTO maintenanceRequestDTO){
 
         Employee employee = getEmployeeById(maintenanceRequestDTO.getEmployeeId());
 
-        // Validar si la entidad relacionada (vehículo o maquinaria) existe
         switch (maintenanceRequestDTO.getRelatedEntityType()) {
             case VEHICULO -> {
                 if (!vehicleRepository.existsById(maintenanceRequestDTO.getRelatedEntityId())) {
@@ -103,6 +128,13 @@ public class MaintenanceService {
         return maintenanceMapper.toResponseDto(updatedMaintenance);
     }
 
+
+    /**
+     * Elimina un mantenimiento del sistema.
+     *
+     * @param id El ID del mantenimiento a eliminar.
+     * @throws ResourceNotFoundException Si no se encuentra el mantenimiento.
+     */
     @Transactional
     public void deleteMaintenance(Long id){
 
@@ -113,6 +145,14 @@ public class MaintenanceService {
 
     }
 
+
+    /**
+     * Obtiene un empleado por su ID.
+     *
+     * @param id El ID del empleado a obtener.
+     * @return El empleado correspondiente.
+     * @throws ResourceNotFoundException Si no se encuentra el empleado.
+     */
     private Employee getEmployeeById(Long id) {
         return employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(EMPLOYEE_NOT_FOUND));

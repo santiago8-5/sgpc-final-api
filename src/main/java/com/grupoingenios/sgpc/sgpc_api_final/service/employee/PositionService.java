@@ -14,6 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los puestos de los empleados.
+ * Proporciona métodos para realizar operaciones CRUD sobre los puestos,
+ * además de validar reglas de negocio como la unicidad del nombre del puesto.
+ */
 @Service
 public class PositionService {
 
@@ -27,6 +32,11 @@ public class PositionService {
         this.employeeRepository = employeeRepository;
     }
 
+    /**
+     * Obtiene todos los puestos de empleados en el sistema.
+     *
+     * @return Lista de puestos como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<PositionResponseDTO> getAllPositions(){
         return positionRepository
@@ -36,6 +46,12 @@ public class PositionService {
                 .toList();
     }
 
+    /**
+     * Obtiene los detalles de un puesto por su ID.
+     *
+     * @param id El ID del puesto a buscar.
+     * @return El puesto correspondiente como DTO.
+     */
     @Transactional(readOnly = true)
     public PositionResponseDTO getPositionById(Long id){
         Position position = positionRepository
@@ -45,6 +61,13 @@ public class PositionService {
         return positionMapper.toResponseDTO(position);
     }
 
+    /**
+     * Crea un nuevo puesto de empleado en el sistema.
+     *
+     * @param positionRequestDTO DTO con los datos del puesto a crear.
+     * @return El puesto creado como DTO.
+     * @throws BadRequestException Si el nombre del puesto ya está en uso.
+     */
     @Transactional
     public PositionResponseDTO createPosition(PositionRequestDTO positionRequestDTO){
 
@@ -59,6 +82,15 @@ public class PositionService {
 
     }
 
+    /**
+     * Actualiza un puesto existente en el sistema.
+     *
+     * @param id El ID del puesto a actualizar.
+     * @param positionRequestDTO DTO con los nuevos datos del puesto.
+     * @return El puesto actualizado como DTO.
+     * @throws ResourceNotFoundException Si el puesto no existe.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     @Transactional
     public PositionResponseDTO updatePosition(Long id, PositionRequestDTO positionRequestDTO){
 
@@ -75,7 +107,13 @@ public class PositionService {
 
     }
 
-
+    /**
+     * Elimina un puesto del sistema.
+     *
+     * @param id El ID del puesto a eliminar.
+     * @throws ResourceNotFoundException Si el puesto no existe.
+     * @throws EntityInUseException Si el puesto tiene empleados asociados.
+     */
     @Transactional
     public void deletePosition(Long id){
         if(!positionRepository.existsById(id)){
@@ -90,6 +128,13 @@ public class PositionService {
         positionRepository.deleteById(id);
     }
 
+    /**
+     * Valida que el nuevo nombre del puesto no esté en uso.
+     *
+     * @param currentName El nombre actual del puesto.
+     * @param newName El nuevo nombre del puesto.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName){
         if(!currentName.equalsIgnoreCase(newName) && positionRepository.existsByNameIgnoreCase(newName)){
             throw new BadRequestException(POSITION_EXIST_NAME);

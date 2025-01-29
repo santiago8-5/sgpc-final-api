@@ -16,6 +16,10 @@ import java.util.List;
 
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+/**
+ * Servicio que gestiona la lógica de negocio relacionada con las categorías de empleados.
+ * Proporciona operaciones CRUD para las categorías, validando reglas de negocio como unicidad del nombre.
+ */
 @Service
 public class CategoryService {
 
@@ -31,6 +35,11 @@ public class CategoryService {
     }
 
 
+    /**
+     * Obtiene todas las categorías de empleados en el sistema.
+     *
+     * @return Lista de categorías como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<CategoryResponseDTO> getAllCategories(){
         return categoryRepository
@@ -40,6 +49,12 @@ public class CategoryService {
                 .toList();
     }
 
+    /**
+     * Obtiene los detalles de una categoría de empleado por su ID.
+     *
+     * @param id El ID de la categoría a buscar.
+     * @return La categoría correspondiente como DTO.
+     */
     @Transactional(readOnly = true)
     public CategoryResponseDTO getCategoryById(Long id){
         Category category = categoryRepository
@@ -50,6 +65,13 @@ public class CategoryService {
     }
 
 
+    /**
+     * Crea una nueva categoría de empleado en el sistema.
+     *
+     * @param categoryRequestDTO DTO con los datos de la categoría a crear.
+     * @return La categoría creada como DTO.
+     * @throws ResourceNotFoundException Si ya existe una categoría con el mismo nombre.
+     */
     @Transactional
     public CategoryResponseDTO createCategory(CategoryRequestDTO categoryRequestDTO){
         if(categoryRepository.existsByNameIgnoreCase(categoryRequestDTO.getName())){
@@ -63,6 +85,16 @@ public class CategoryService {
 
     }
 
+
+    /**
+     * Actualiza la información de una categoría existente.
+     *
+     * @param id El ID de la categoría a actualizar.
+     * @param categoryRequestDTO DTO con los nuevos datos de la categoría.
+     * @return La categoría actualizada como DTO.
+     * @throws ResourceNotFoundException Si la categoría no existe.
+     * @throws BadRequestException Si el nuevo nombre de categoría ya está en uso.
+     */
     @Transactional
     public CategoryResponseDTO updateCategory(Long id, CategoryRequestDTO categoryRequestDTO){
         Category existingCategory = categoryRepository.findById(id)
@@ -77,23 +109,31 @@ public class CategoryService {
         return categoryMapper.toResponseDTO(updatedCategory);
     }
 
+    /**
+     * Elimina una categoría de empleado.
+     *
+     * @param id El ID de la categoría a eliminar.
+     * @throws ResourceNotFoundException Si la categoría no existe.
+     * @throws EntityInUseException Si la categoría tiene empleados asociados.
+     */
     @Transactional
     public void deleteCategory(Long id){
-
-        // Comprobar si existe la categoría
         if(!categoryRepository.existsById(id)){
             throw new ResourceNotFoundException(CATEGORY_NOT_FOUND);
         }
-
-        // Verificar si hay empleados asociados a categoría
         if(employeeRepository.existsByCategory_IdCategory(id)){
             throw new EntityInUseException(ENTITY_IN_USE);
         }
-
-
         categoryRepository.deleteById(id);
     }
 
+    /**
+     * Valida que el nuevo nombre de la categoría no esté en uso.
+     *
+     * @param currentName El nombre actual de la categoría.
+     * @param newName El nuevo nombre de la categoría.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName){
         if(!currentName.equalsIgnoreCase(newName) && categoryRepository.existsByNameIgnoreCase(newName)){
             throw new BadRequestException(CATEGORY_NOT_FOUND);

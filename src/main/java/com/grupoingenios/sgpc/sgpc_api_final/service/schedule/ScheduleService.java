@@ -23,6 +23,12 @@ import java.util.List;
 
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los cronogramas y las actividades programadas.
+ * Proporciona métodos para realizar operaciones CRUD sobre los cronogramas, las actividades programadas y sus asignaciones.
+ * Incluye validaciones sobre la relación de actividades con cronogramas y fechas válidas.
+ */
 @Service
 public class ScheduleService {
 
@@ -35,6 +41,16 @@ public class ScheduleService {
 
 
 
+    /**
+     * Constructor que inicializa el servicio con sus dependencias necesarias.
+     *
+     * @param scheduleRepository Repositorio de cronogramas.
+     * @param scheduleMapper Mapper para convertir entre entidades y DTOs de cronogramas.
+     * @param scheduledActivityRepository Repositorio de actividades programadas.
+     * @param workRepository Repositorio de trabajos relacionados con los cronogramas.
+     * @param activityRepository Repositorio de actividades.
+     * @param scheduledActivityMapper Mapper para convertir entre entidades y DTOs de actividades programadas.
+     */
     public ScheduleService(ScheduleRepository scheduleRepository, ScheduleMapper scheduleMapper, ScheduledActivityRepository scheduledActivityRepository,
                            WorkRepository workRepository, ActivityRepository activityRepository, ScheduledActivityMapper scheduledActivityMapper) {
         this.scheduleRepository = scheduleRepository;
@@ -45,6 +61,11 @@ public class ScheduleService {
         this.scheduledActivityMapper = scheduledActivityMapper;
     }
 
+    /**
+     * Obtiene todos los cronogramas en el sistema.
+     *
+     * @return Lista de cronogramas como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<ScheduleResponseDTO> getAllSchedules(){
         return scheduleRepository
@@ -54,6 +75,14 @@ public class ScheduleService {
                 .toList();
     }
 
+
+    /**
+     * Obtiene los detalles de un cronograma por su ID.
+     *
+     * @param id ID del cronograma a buscar.
+     * @return El cronograma correspondiente como DTO.
+     * @throws ResourceNotFoundException Si no se encuentra el cronograma.
+     */
     @Transactional(readOnly = true)
     public ScheduleResponseDTO getScheduleById(Long id){
         Schedule schedule = scheduleRepository
@@ -64,43 +93,50 @@ public class ScheduleService {
     }
 
 
+    /**
+     * Actualiza un cronograma existente.
+     *
+     * @param id ID del cronograma a actualizar.
+     * @param scheduleRequestDTO DTO con los nuevos datos del cronograma.
+     * @return El cronograma actualizado como DTO.
+     * @throws ResourceNotFoundException Si no se encuentra el cronograma.
+     * @throws BadRequestException Si el nuevo nombre del cronograma ya está en uso.
+     */
     @Transactional
     public ScheduleResponseDTO updateSchedule(long id, ScheduleRequestDTO scheduleRequestDTO){
 
-        // Obtenenmos el cronorgrama existente
         Schedule existingSchedule = scheduleRepository
                 .findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException(SCHEDULE_NOT_FOUND));
 
-        // Se valida que no exista ese nombre ya en la base de datos
         validateUniqueName(existingSchedule.getName(), scheduleRequestDTO.getName());
 
-
-        // Actualizamos el cronograma con los datos del mapper
         scheduleMapper.updateScheduleFromDTO(scheduleRequestDTO, existingSchedule);
 
-        // Gudamos el cronograma modificado
         Schedule updatedSchedule = scheduleRepository.save(existingSchedule);
 
-        // Retornamos el DTO response
         return scheduleMapper.toResponseDto(updatedSchedule);
 
     }
 
 
-    // Crear scheduledActivity
+    /**
+     * Crea una nueva actividad programada y la asigna a un cronograma.
+     *
+     * @param idSchedule ID del cronograma al que se asignará la actividad programada.
+     * @param scheduledActivityRequestDTO DTO con los datos de la actividad programada.
+     * @return La actividad programada creada como DTO.
+     * @throws BadRequestException Si las fechas son inválidas o si la relación ya existe.
+     */
     @Transactional
     public ScheduledActivityResponseDTO createAndAssignScheduledActivity(Long idSchedule, ScheduledActivityRequestDTO scheduledActivityRequestDTO){
-        // Validar fechas
+
         validateDates(scheduledActivityRequestDTO);
 
-        // Obtenemos el schedule que viene en el request
         Schedule schedule = getScheduleForActivityById(idSchedule);
 
-        // Obtenemos la actividad que viene en el request
         Activity activity = getActivityById(scheduledActivityRequestDTO.getIdActivity());
 
-        // Verificamos si ya existe una relación entre un schedule y una activity
         validateUniqueScheduledActivity(schedule.getIdSchedule(), activity.getIdActivity(), null);
 
         ScheduledActivity scheduledActivity = scheduledActivityMapper.toEntity(scheduledActivityRequestDTO);
@@ -113,64 +149,75 @@ public class ScheduleService {
 
     }
 
-    // Obtener un scheduledActivity por id
+
+    /**
+     * Obtiene los detalles de una actividad programada por su ID y el ID del cronograma.
+     *
+     * @param scheduleId ID del cronograma.
+     * @param activityId ID de la actividad programada.
+     * @return La actividad programada correspondiente como DTO.
+     * @throws ResourceNotFoundException Si no se encuentra la actividad programada o no pertenece al cronograma especificado.
+     */
     @Transactional(readOnly = true)
     public ScheduledActivityResponseDTO getScheduledActivityById(Long scheduleId, Long activityId) {
-        // Validar que la actividad programada existe y pertenece al cronograma
+
         ScheduledActivity scheduledActivity = scheduledActivityRepository.findById(activityId)
-                .orElseThrow(() -> new ResourceNotFoundException("Scheduled activity not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Actividad programada no encontrada"));
         if (!scheduledActivity.getSchedule().getIdSchedule().equals(scheduleId)) {
-            throw new BadRequestException("The activity does not belong to the specified schedule.");
+            throw new BadRequestException("La actividad no pertenece al cronograma expecificado.");
         }
 
-        // Mapear a DTO y retornar
         return scheduledActivityMapper.toResponseDto(scheduledActivity);
     }
 
 
-
-    // Actualizar ScheduledActivity
+    /**
+     * Actualiza una actividad programada existente.
+     *
+     * @param idSchedule ID del cronograma al que pertenece la actividad programada.
+     * @param idScheduledActivity ID de la actividad programada a actualizar.
+     * @param scheduledActivityRequestDTO DTO con los nuevos datos de la actividad programada.
+     * @return La actividad programada actualizada como DTO.
+     * @throws ResourceNotFoundException Si no se encuentra la actividad programada o el cronograma.
+     * @throws BadRequestException Si las fechas son inválidas o si la relación ya existe.
+     */
     @Transactional
     public ScheduledActivityResponseDTO updateScheduleActivity(Long idSchedule, Long idScheduledActivity, ScheduledActivityRequestDTO scheduledActivityRequestDTO){
 
-
-        // Validar fechas
         validateDates(scheduledActivityRequestDTO);
 
-        // Obtenemos el schedule que viene en el request
         Schedule schedule = getScheduleForActivityById(idSchedule);
 
-        // Validar que la actividad programada existe y pertenece al cronograma
         ScheduledActivity existingScheduledActivity = scheduledActivityRepository
                 .findById(idScheduledActivity).orElseThrow(()-> new ResourceNotFoundException("No se encontró este registro"));
 
-        // Obtenemos la actividad que viene en el request
         Activity activity = getActivityById(scheduledActivityRequestDTO.getIdActivity());
 
-        // Verificamos si ya existe una relación entre un schedule y una activity
         validateUniqueScheduledActivity(schedule.getIdSchedule(), activity.getIdActivity(), idScheduledActivity);
 
 
-        // Validar que la actividad programada existe y pertenece al cronograma
         if (!existingScheduledActivity.getSchedule().getIdSchedule().equals(idSchedule)) {
             throw new BadRequestException("La actividad no pertenece al cronograma especificado.");
         }
 
-
-        // Actualizamos los datos
         scheduledActivityMapper.updateScheduledActivityFromDTO(scheduledActivityRequestDTO, existingScheduledActivity);
 
         existingScheduledActivity.setActivity(activity);
 
-        // guadamos
         ScheduledActivity updatedScheduleActivity = scheduledActivityRepository.save(existingScheduledActivity);
 
-        // retornamos la respuesta
         return scheduledActivityMapper.toResponseDto(updatedScheduleActivity);
 
     }
 
-    // Eliminar ScheduledActivity
+
+    /**
+     * Elimina una actividad programada.
+     *
+     * @param idSchedule ID del cronograma al que pertenece la actividad programada.
+     * @param idScheduledActivity ID de la actividad programada a eliminar.
+     * @throws ResourceNotFoundException Si no se encuentra la actividad programada.
+     */
     @Transactional
     public void deleteScheduledActivity(Long idSchedule, Long idScheduledActivity){
 
@@ -184,8 +231,13 @@ public class ScheduleService {
     }
 
 
-
-
+    /**
+     * Elimina un cronograma.
+     *
+     * @param id ID del cronograma a eliminar.
+     * @throws ResourceNotFoundException Si no se encuentra el cronograma.
+     * @throws EntityInUseException Si el cronograma tiene actividades programadas o trabajos asociados.
+     */
     @Transactional
     public void deleteSchedule(Long id){
 
@@ -201,6 +253,13 @@ public class ScheduleService {
     }
 
 
+    /**
+     * Valida que el nombre del cronograma no exista ya en la base de datos.
+     *
+     * @param currentName El nombre actual del cronograma.
+     * @param newName El nuevo nombre del cronograma.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName){
         if(!currentName.equalsIgnoreCase(newName) && scheduleRepository.existsByNameIgnoreCase(newName)){
             throw new BadRequestException(SCHEDULE_EXIST_NAME);
@@ -208,6 +267,12 @@ public class ScheduleService {
     }
 
 
+    /**
+     * Valida que las fechas de inicio y fin sean correctas.
+     *
+     * @param dto DTO con las fechas de la actividad programada.
+     * @throws BadRequestException Si las fechas no son válidas.
+     */
     private void validateDates(ScheduledActivityRequestDTO dto) {
         if (dto.getEstimatedStartDate().isAfter(dto.getEstimatedEndDate())) {
             throw new BadRequestException("La fecha estimada de inicio no puede ser posterior a la fecha estimada de fin.");
@@ -218,30 +283,53 @@ public class ScheduleService {
     }
 
 
+
+    /**
+     * Obtiene el cronograma para una actividad programada por su ID.
+     *
+     * @param id ID del cronograma.
+     * @return El cronograma correspondiente.
+     * @throws ResourceNotFoundException Si no se encuentra el cronograma.
+     */
     private Schedule getScheduleForActivityById(Long id){
         return scheduleRepository
                 .findById(id)
                 .orElseThrow(()->new ResourceNotFoundException(SCHEDULE_NOT_FOUND));
     }
 
+
+
+    /**
+     * Obtiene la actividad por su ID.
+     *
+     * @param id ID de la actividad.
+     * @return La actividad correspondiente.
+     * @throws ResourceNotFoundException Si no se encuentra la actividad.
+     */
     private Activity getActivityById(Long id){
         return activityRepository
                 .findById(id)
                 .orElseThrow(()->new ResourceNotFoundException(ACTIVITY_NOT_FOUND));
     }
 
+
+    /**
+     * Valida que no exista una actividad programada ya asociada al cronograma.
+     *
+     * @param scheduleId ID del cronograma.
+     * @param activityId ID de la actividad.
+     * @param excludedScheduledActivityId ID de la actividad programada a excluir de la validación.
+     * @throws BadRequestException Si la actividad ya está asociada al cronograma.
+     */
     private void validateUniqueScheduledActivity(Long scheduleId, Long activityId, Long excludedScheduledActivityId) {
-        System.out.println("hola");
         if (excludedScheduledActivityId == null) {
             boolean exists = scheduledActivityRepository.existsBySchedule_IdScheduleAndActivity_IdActivity(scheduleId, activityId);
-            System.out.println("Validación creación: ScheduleId=" + scheduleId + ", ActivityId=" + activityId + ", Exists=" + exists);
             if (exists) {
                 throw new BadRequestException("La actividad ya está asociada al cronograma especificado.");
             }
         } else {
             boolean exists = scheduledActivityRepository.existsBySchedule_IdScheduleAndActivity_IdActivityAndScheduledActivityIdNot(
                     scheduleId, activityId, excludedScheduledActivityId);
-            System.out.println("Validación actualización: ScheduleId=" + scheduleId + ", ActivityId=" + activityId + ", ExcludedScheduledActivityId=" + excludedScheduledActivityId + ", Exists=" + exists);
             if (exists) {
                 throw new BadRequestException("La actividad ya está asociada al cronograma especificado.");
             }

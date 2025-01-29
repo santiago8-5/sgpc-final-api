@@ -15,6 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los usuarios en el sistema.
+ * Proporciona métodos para realizar operaciones CRUD sobre los usuarios, además de validar reglas de negocio como la unicidad del nombre de usuario.
+ */
 @Service
 public class UserService {
 
@@ -30,6 +34,13 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+
+
+    /**
+     * Obtiene todos los usuarios en el sistema.
+     *
+     * @return Lista de usuarios como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<UserResponseDTO> getAllUsers(){
         return userRepository
@@ -40,6 +51,13 @@ public class UserService {
     }
 
 
+    /**
+     * Crea un nuevo usuario en el sistema.
+     *
+     * @param userRequestDTO DTO con los datos del usuario a crear.
+     * @return El usuario creado como DTO.
+     * @throws BadRequestException Si el nombre de usuario ya está en uso.
+     */
     @Transactional
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO){
 
@@ -61,20 +79,27 @@ public class UserService {
 
     }
 
+
+
+    /**
+     * Actualiza un usuario existente en el sistema.
+     *
+     * @param id El ID del usuario a actualizar.
+     * @param userRequestDTO DTO con los nuevos datos del usuario.
+     * @return El usuario actualizado como DTO.
+     * @throws ResourceNotFoundException Si el usuario no existe.
+     * @throws BadRequestException Si el nuevo nombre de usuario ya está en uso.
+     */
     @Transactional
     public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO){
 
-        // Obtener el usuario existente
         User existingUser = userRepository
                 .findById(id).orElseThrow(()-> new ResourceNotFoundException(USER_NOT_FOUND));
 
-        // Obtener el rol existente
         Rol rol = getRolById(userRequestDTO.getRolId());
 
-        // Validar el nombre actual es igual al nuevo nombre
         validateUniqueName(existingUser.getUsername(), userRequestDTO.getUsername());
 
-        // Actualizamos el user desde del dto
         userMapper.updateUserFromDTO(userRequestDTO, existingUser);
         existingUser.setRol(rol);
 
@@ -86,13 +111,18 @@ public class UserService {
             }
         }
 
-        // Guardamos los cambios
         User updatedUser = userRepository.save(existingUser);
 
-        // Devolvemos  la respuesta
         return userMapper.toResponseDto(updatedUser);
     }
 
+
+    /**
+     * Elimina un usuario del sistema.
+     *
+     * @param id El ID del usuario a eliminar.
+     * @throws ResourceNotFoundException Si el usuario no existe.
+     */
     @Transactional
     public void deleteUser(Long id){
         if(!userRepository.existsById(id)){
@@ -101,18 +131,42 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+
+    /**
+     * Valida que el nombre de usuario no esté ya en uso.
+     *
+     * @param currentName El nombre actual del usuario.
+     * @param newName El nuevo nombre del usuario.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName){
         if(!currentName.equalsIgnoreCase(newName) && userRepository.existsByUsernameIgnoreCase(newName)){
             throw new BadRequestException(USER_EXIST);
         }
     }
 
+
+    /**
+     * Obtiene el rol de usuario por su ID.
+     *
+     * @param id El ID del rol.
+     * @return El rol correspondiente.
+     * @throws ResourceNotFoundException Si el rol no existe.
+     */
     public Rol getRolById(Long id){
         return rolRepository
                 .findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException(ROLE_NOT_FOUND));
     }
 
+
+    /**
+     * Obtiene el rol de usuario por su ID.
+     *
+     * @param id El ID del rol.
+     * @return El rol correspondiente.
+     * @throws ResourceNotFoundException Si el rol no existe.
+     */
     public UserResponseDTO getUserById(Long id){
         User user = userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException(USER_NOT_FOUND));
         return userMapper.toResponseDto(user);

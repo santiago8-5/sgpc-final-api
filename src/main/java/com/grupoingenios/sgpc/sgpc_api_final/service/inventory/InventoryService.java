@@ -16,6 +16,11 @@ import java.util.List;
 
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los inventarios.
+ * Proporciona métodos para realizar operaciones CRUD sobre los inventarios,
+ * y valida las relaciones de los inventarios con los proveedores y otras entidades.
+ */
 @Service
 public class InventoryService {
 
@@ -29,7 +34,11 @@ public class InventoryService {
         this.supplierRepository = supplierRepository;
     }
 
-
+    /**
+     * Obtiene todos los inventarios en el sistema.
+     *
+     * @return Lista de inventarios como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<InventoryResponseDTO> getAllInventories() {
         return inventoryRepository
@@ -39,74 +48,94 @@ public class InventoryService {
                 .toList();
     }
 
+    /**
+     * Crea un nuevo inventario en el sistema y asigna un proveedor.
+     *
+     * @param inventoryRequest DTO con los datos del inventario a crear.
+     * @return El inventario creado como DTO.
+     */
     @Transactional
     public InventoryResponseDTO createInventory(InventoryRequestDTO inventoryRequest) {
 
-        // Obtener el proveedor especificado en supplierId.
         Supplier supplier = getSupplierById(inventoryRequest.getSupplierId());
 
-        // Transformar el dto a entidad.
         Inventory inventory = inventoryMapper.toEntity(inventoryRequest);
 
-        // Añadir el supplier al inventory.
         inventory.getSuppliers().add(supplier);
 
-        // Guardar el inventario con el supplier.
         Inventory savedInventory = inventoryRepository.save(inventory);
 
-        // Retornar la respuesta.
         return inventoryMapper.toResponseDTO(savedInventory);
 
     }
 
+    /**
+     * Actualiza un inventario existente en el sistema.
+     *
+     * @param id El ID del inventario a actualizar.
+     * @param inventoryRequest DTO con los nuevos datos del inventario.
+     * @return El inventario actualizado como DTO.
+     */
     @Transactional
     public InventoryResponseDTO updateInventory(Long id, InventoryRequestDTO inventoryRequest) {
 
-        // Recuperamos el inventory existente
         Inventory inventoryExisting = inventoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(INPUT_NOT_FOUND));
 
-        // Actualizar los campos básicos
         inventoryMapper.updatedInventoryFromDTO(inventoryRequest, inventoryExisting);
 
-        // Verificar si hay un nuevo supplierId y actualizar el proveedor si es necesario
         if (inventoryRequest.getSupplierId() != null) {
             Supplier newSupplier = getSupplierById(inventoryRequest.getSupplierId());
             inventoryExisting.getSuppliers().clear();
             inventoryExisting.getSuppliers().add(newSupplier);
         }
 
-        // Actualizar un inventario
         Inventory updatedInventory = inventoryRepository.save(inventoryExisting);
 
-        // Retornar la respuesta
         return inventoryMapper.toResponseDTO(updatedInventory);
     }
 
+
+    /**
+     * Elimina un inventario del sistema por su ID.
+     *
+     * @param id El ID del inventario a eliminar.
+     * @throws ResourceNotFoundException Si el inventario no existe.
+     * @throws EntityInUseException Si el inventario tiene relaciones asociadas.
+     */
     @Transactional
     public void deleteInventoryById(Long id){
 
-        // Comprobar si existe el inventory
         if (!inventoryRepository.existsById(id)) {
             throw new ResourceNotFoundException(INPUT_NOT_FOUND );
         }
 
-        // Validar si tiene una relación intermedia
         validateRelationships(id);
 
-        // Eliminar relaciones en la tabla intermedia, si no hay relación
         inventoryRepository.deleteRelationships(id);
 
-        // Eliminar la entidad
         inventoryRepository.deleteById(id);
     }
 
 
+    /**
+     * Obtiene un proveedor por su ID.
+     *
+     * @param id El ID del proveedor.
+     * @return El proveedor correspondiente.
+     * @throws ResourceNotFoundException Si el proveedor no existe.
+     */
     public Supplier getSupplierById(Long id){
         return supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(SUPPLIER_NOT_FOUND));
     }
 
+    /**
+     * Valida si un inventario tiene relaciones asociadas antes de eliminarlo.
+     *
+     * @param inventoryId El ID del inventario a verificar.
+     * @throws EntityInUseException Si el inventario tiene relaciones activas.
+     */
     private void validateRelationships(Long inventoryId) {
         if (inventoryRepository.hasRelationships(inventoryId)) {
             throw new EntityInUseException(ENTITY_IN_USE);

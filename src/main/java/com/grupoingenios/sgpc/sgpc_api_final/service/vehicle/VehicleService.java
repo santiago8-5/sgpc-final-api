@@ -17,6 +17,10 @@ import java.util.List;
 
 import static com.grupoingenios.sgpc.sgpc_api_final.constants.AppConstant.*;
 
+/**
+ * Servicio encargado de gestionar las operaciones relacionadas con los vehículos en el sistema.
+ * Proporciona métodos para realizar operaciones CRUD sobre los vehículos, además de validar reglas de negocio como la unicidad del nombre del vehículo.
+ */
 @Service
 public class VehicleService {
 
@@ -30,6 +34,12 @@ public class VehicleService {
         this.maintenanceRepository = maintenanceRepository;
     }
 
+
+    /**
+     * Obtiene todos los vehículos en el sistema.
+     *
+     * @return Lista de vehículos como DTOs.
+     */
     @Transactional(readOnly = true)
     public List<VehicleResponseDTO> getAllVehicles(){
         return vehicleRepository
@@ -40,6 +50,13 @@ public class VehicleService {
     }
 
 
+    /**
+     * Crea un nuevo vehículo en el sistema.
+     *
+     * @param vehicleRequestDTO DTO con los datos del vehículo a crear.
+     * @return El vehículo creado como DTO.
+     * @throws BadRequestException Si el nombre del vehículo ya está en uso.
+     */
     @Transactional
     public VehicleResponseDTO createVehicle(VehicleRequestDTO vehicleRequestDTO){
 
@@ -53,6 +70,16 @@ public class VehicleService {
         return vehicleMapper.toResponseDto(savedVehicle);
     }
 
+
+    /**
+     * Actualiza un vehículo existente en el sistema.
+     *
+     * @param id El ID del vehículo a actualizar.
+     * @param vehicleRequestDTO DTO con los nuevos datos del vehículo.
+     * @return El vehículo actualizado como DTO.
+     * @throws ResourceNotFoundException Si el vehículo no existe.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     @Transactional
     public VehicleResponseDTO updateVehicle(Long id, VehicleRequestDTO vehicleRequestDTO){
 
@@ -69,6 +96,14 @@ public class VehicleService {
         return vehicleMapper.toResponseDto(updatedVehicle);
     }
 
+
+    /**
+     * Elimina un vehículo del sistema.
+     *
+     * @param id El ID del vehículo a eliminar.
+     * @throws ResourceNotFoundException Si el vehículo no existe.
+     * @throws EntityInUseException Si el vehículo tiene mantenimientos asociados.
+     */
     @Transactional
     public void deleteVehicle(Long id){
 
@@ -81,6 +116,14 @@ public class VehicleService {
         vehicleRepository.deleteById(id);
     }
 
+
+    /**
+     * Valida que el nombre del vehículo no esté en uso.
+     *
+     * @param currentName El nombre actual del vehículo.
+     * @param newName El nuevo nombre del vehículo.
+     * @throws BadRequestException Si el nuevo nombre ya está en uso.
+     */
     private void validateUniqueName(String currentName, String newName){
         if(!currentName.equalsIgnoreCase(newName) && vehicleRepository.existsByNameIgnoreCase(newName)){
             throw new BadRequestException(VEHICLE_EXIST_NAME );
