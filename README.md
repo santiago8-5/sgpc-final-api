@@ -2,22 +2,22 @@
 
 ## 🚀 Descripción del Proyecto
 
-SGPC-API-FINAL es una API RESTful desarrollada con **Java 21** y **Spring Boot** para la gestión de un sistema administrativo de una constructora. Su backend proporciona servicios que pueden ser consumidos por aplicaciones cliente como **React** y otros frameworks.
+Este  proyecto **SGPC-API-FINAL**, una API RESTful desarrollada con **Java 21** y **Spring Boot** para la gestión de un sistema administrativo de una constructora. Se diseño para proporcionar servicios backend que pueden ser consumidos por aplicaciones cliente como **React** y otros frameworks.
 
-El proyecto está diseñado siguiendo **las mejores prácticas de desarrollo** y es **altamente configurable** para su despliegue en entornos de producción.
+Siguiendo las **mejores prácticas de desarrollo**, me aseguré de que fuera **altamente configurable** para facilitar su despliegue en distintos entornos, incluyendo producción.
 
 ---
 
 ## 🏗 Estructura del Proyecto
 
-El proyecto sigue las convenciones estándar para aplicaciones **Spring Boot**:
+Mantengo la estructura del proyecto siguiendo las convenciones estándar de **Spring Boot** para facilitar la mantenibilidad y escalabilidad:
 
 ```bash
 sgpc-api-final/
 │
-├── .idea/
-├── .mvn/
-├── .vscode/
+├── .idea/                 # Configuración del entorno de desarrollo
+├── .mvn/                  # Configuración de Maven
+├── .vscode/               # Configuración de VS Code
 │
 ├── src/main/java/com/grupoingenios/sgpc/sgpc_api_final/
 │   ├── config/          # Configuración de la aplicación (seguridad, beans, etc.)
@@ -41,17 +41,17 @@ sgpc-api-final/
 
 ### 🛠 Pre-requisitos
 
-Para ejecutar este proyecto necesitas:
+Para ejecutar este proyecto, necesitas tener instalado lo siguiente:
 
 - **JDK 21** o superior.
 - **Maven** o **Gradle**.
-- **Base de datos MySQL** (Puedes utilizar otra, pero en este ejemplo se usa MySQL).
+- **Base de datos MySQL** (o cualquier otra compatible, aunque aquí lo configuré con MySQL).
 
 ---
 
 ## 📌 Configuración de la Base de Datos
 
-La aplicación utiliza **variables de entorno** para configurar su base de datos y seguridad.
+Uso **variables de entorno** para configurar la base de datos y la seguridad. Esto permite una mayor flexibilidad y evita exponer información sensible en el código.
 
 ### `application.properties`
 
@@ -111,21 +111,16 @@ JWT_SECRET=
 
 ---
 
-## 🚀 Compilar y Ejecutar la Aplicación
+## 🚀 Cómo Compilar y Ejecutar la Aplicación
 
-Para compilar y ejecutar con **Maven**:
+Para compilar y ejecutar con **Maven**, simplemente usa:
 
 ```bash
 mvn spring-boot:run
 ```
 
-Para compilar y ejecutar con **Gradle**:
 
-```bash
-gradle bootRun
-```
-
-Una vez iniciada, la API estará disponible en:
+Una vez que el servidor esté corriendo, la API estará disponible en:
 
 ```bash
 http://localhost:8080
@@ -135,21 +130,19 @@ http://localhost:8080
 
 ## 🧑‍💻 Documentación con Swagger
 
-La API cuenta con **Swagger** para una interacción más fácil con los endpoints.
-
-Puedes acceder a la documentación interactiva en:
+Para facilitar la interacción con la API, integré **Swagger**. Puedes acceder a la documentación interactiva en:
 
 ```bash
 http://localhost:8080/swagger-ui/index.html
 ```
 
-Desde Swagger puedes probar todos los endpoints sin necesidad de herramientas externas.
+Desde ahí, puedes probar todos los endpoints sin necesidad de herramientas externas.
 
 ---
 
 ## 🔐 Seguridad
 
-La API utiliza **JWT (JSON Web Token)** para la autenticación. Los usuarios deben incluir su token JWT en cada solicitud después de autenticarse.
+Esta API usa **JWT (JSON Web Token)** para la autenticación. Los usuarios deben incluir su token JWT en cada solicitud después de autenticarse.
 
 ### **Ejemplo de autenticación**
 
@@ -171,7 +164,7 @@ Authorization: Bearer <TOKEN>
 
 ## 🚨 Manejo de Excepciones
 
-La API maneja diversas **excepciones personalizadas** para una mejor experiencia de usuario y depuración:
+Para mejorar la experiencia de usuario y depuración, la API maneja diversas **excepciones personalizadas**:
 
 - **`ResourceNotFoundException`**: Cuando un recurso no es encontrado.
 - **`BadRequestException`**: Cuando los datos de entrada son inválidos.
@@ -179,11 +172,5 @@ La API maneja diversas **excepciones personalizadas** para una mejor experiencia
 
 ---
 
-## 📌 Conclusión
 
-Este proyecto está diseñado para ser **altamente configurable** mediante **variables de entorno**, lo que facilita su despliegue en entornos como **Docker, Heroku o Kubernetes**.
-
-Adicionalmente, la integración con **Swagger** facilita el uso y prueba de los servicios expuestos.
-
-**✅ Listo para Producción y Desarrollo!**
 
