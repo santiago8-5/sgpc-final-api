@@ -10,30 +10,30 @@ El proyecto está diseñado siguiendo las mejores prácticas de desarrollo y es 
 
 El proyecto sigue las convenciones estándar para aplicaciones Spring Boot:
 
-sgpc-api-final
+sgpc-api-final/
 │
-├── .idea
-├── .mvn
-├── .vscode
+├── .idea/
+├── .mvn/
+├── .vscode/
 │
-├── src/main/java/com/grupoingenios/sgpc/sgpc_api_final
-│   ├── config            # Configuración de la aplicación (seguridad, beans, etc.)
-│   ├── constants         # Definición de constantes reutilizables
-│   ├── controller        # Controladores REST
-│   ├── entity            # Entidades JPA
-│   ├── exception         # Excepciones personalizadas
-│   ├── mapper            # MapStruct: Mapeo entre entidades y DTOs
-│   ├── repository        # Repositorios JPA
-│   ├── service           # Servicios con la lógica de negocio
-│   ├── validation        # Validaciones personalizadas
+├── src/main/java/com/grupoingenios/sgpc/sgpc_api_final/
+│   ├── config/          # Configuración de la aplicación (seguridad, beans, etc.)
+│   ├── constants/       # Definición de constantes reutilizables
+│   ├── controller/      # Controladores REST
+│   ├── entity/          # Entidades JPA
+│   ├── exception/       # Excepciones personalizadas
+│   ├── mapper/          # MapStruct: Mapeo entre entidades y DTOs
+│   ├── repository/      # Repositorios JPA
+│   ├── service/         # Servicios con la lógica de negocio
+│   ├── validation/      # Validaciones personalizadas
 │
-└── resources
+└── resources/
     ├── application.properties
     ├── application-dev.properties
 
 ⚙ Instalación
 
-Pre-requisitos
+🛠 Pre-requisitos
 
 Para ejecutar este proyecto necesitas:
 
@@ -43,7 +43,7 @@ Maven o Gradle.
 
 Base de datos MySQL (Puedes utilizar otra, pero en este ejemplo se usa MySQL).
 
-Configuración de la Base de Datos
+📌 Configuración de la Base de Datos
 
 La aplicación utiliza variables de entorno para configurar su base de datos y seguridad.
 
@@ -146,3 +146,5 @@ ResourceNotFoundException: Cuando un recurso no es encontrado.
 BadRequestException: Cuando los datos de entrada son inválidos.
 
 EntityInUseException: Cuando se intenta eliminar un recurso en uso.
+
+
