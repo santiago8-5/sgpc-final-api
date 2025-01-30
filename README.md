@@ -23,6 +23,7 @@ sgpc-api-final/
 │   ├── config/          # Configuración de la aplicación (seguridad, beans, etc.)
 │   ├── constants/       # Definición de constantes reutilizables
 │   ├── controller/      # Controladores REST
+│   ├── dto/             # Objetos de Transferencia de Datos (DTOs)
 │   ├── entity/          # Entidades JPA
 │   ├── exception/       # Excepciones personalizadas
 │   ├── mapper/          # MapStruct: Mapeo entre entidades y DTOs
