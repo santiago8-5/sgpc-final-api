@@ -43,8 +43,8 @@ sgpc-api-final/
 
 Para ejecutar este proyecto, necesitas tener instalado lo siguiente:
 
-- **JDK 21** o superior.
-- **Maven** o **Gradle**.
+- **JDK 21**.
+- **Maven**.
 - **Base de datos MySQL** (o cualquier otra compatible, aunque aquí lo configuré con MySQL).
 
 ---
